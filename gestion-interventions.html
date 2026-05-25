@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GestInter — Gestion des Interventions</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0a0e1a;
+  --surface:  #0f1629;
+  --card:     #141d35;
+  --card2:    #1a2440;
+  --border:   #1e2d50;
+  --border2:  #263554;
+  --accent:   #2563eb;
+  --accent2:  #3b82f6;
+  --orange:   #f59e0b;
+  --green:    #10b981;
+  --red:      #ef4444;
+  --purple:   #8b5cf6;
+  --teal:     #06b6d4;
+  --text:     #e2e8f0;
+  --muted:    #64748b;
+  --muted2:   #94a3b8;
+  --white:    #f8fafc;
+  --r:        10px;
+  --r2:       14px;
+  --sidebar:  240px;
+  --font:     'Plus Jakarta Sans', sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════ */
+#sidebar {
+  width: var(--sidebar);
+  min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+  transition: transform .3s;
+}
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo-text { font-weight: 800; font-size: 1.1rem; color: var(--white); }
+.logo-text span { color: var(--accent2); }
+.sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+.nav-section-label {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  padding: 8px 10px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--r);
+  color: var(--muted2);
+  font-size: .875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active {
+  background: rgba(37,99,235,.15);
+  color: var(--accent2);
+  font-weight: 600;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 20%; bottom: 20%;
+  width: 3px; border-radius: 2px;
+  background: var(--accent);
+}
+.nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+.nav-badge.orange { background: var(--orange); color: #000; }
+.sidebar-footer {
+  padding: 12px 10px;
+  border-top: 1px solid var(--border);
+}
+.user-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background .15s;
+}
+.user-row:hover { background: var(--card); }
+.user-av {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.user-name { font-size: .8rem; font-weight: 600; color: var(--text); }
+.user-role { font-size: .7rem; color: var(--muted); }
+
+/* ═══════════════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════════════ */
+#main {
+  margin-left: var(--sidebar);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-title { font-weight: 700; font-size: 1.05rem; color: var(--white); flex: 1; }
+.topbar-search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 6px 12px;
+  width: 220px;
+}
+.topbar-search input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--font); font-size: .85rem;
+  width: 100%;
+}
+.topbar-search input::placeholder { color: var(--muted); }
+.topbar-btn {
+  width: 34px; height: 34px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: .95rem;
+  transition: background .15s;
+  position: relative;
+}
+.topbar-btn:hover { background: var(--card2); }
+.notif-dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px;
+  background: var(--red); border-radius: 50%;
+  border: 1.5px solid var(--surface);
+}
+.content { padding: 24px; flex: 1; }
+
+/* ═══════════════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════════════ */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ═══════════════════════════════════════════════════
+   CARDS & LAYOUT
+═══════════════════════════════════════════════════ */
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.page-title { font-weight: 800; font-size: 1.4rem; color: var(--white); }
+.page-sub { font-size: .82rem; color: var(--muted2); margin-top: 2px; }
+.grid { display: grid; gap: 16px; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 20px;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.card-title { font-weight: 700; font-size: .95rem; color: var(--white); }
+.card-sub { font-size: .75rem; color: var(--muted2); margin-top: 2px; }
+
+/* ═══════════════════════════════════════════════════
+   STAT CARDS
+═══════════════════════════════════════════════════ */
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+  position: relative; overflow: hidden;
+  transition: transform .2s, border-color .2s;
+}
+.stat-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+.stat-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.blue::after   { background: linear-gradient(90deg, var(--accent), var(--teal)); }
+.stat-card.orange::after { background: linear-gradient(90deg, var(--orange), #f97316); }
+.stat-card.green::after  { background: linear-gradient(90deg, var(--green), #34d399); }
+.stat-card.red::after    { background: linear-gradient(90deg, var(--red), #f87171); }
+.stat-card.purple::after { background: linear-gradient(90deg, var(--purple), #a78bfa); }
+.stat-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.stat-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+}
+.stat-trend {
+  font-size: .72rem; font-weight: 600;
+  padding: 2px 7px; border-radius: 999px;
+  display: flex; align-items: center; gap: 3px;
+}
+.trend-up   { background: rgba(16,185,129,.15); color: var(--green); }
+.trend-down { background: rgba(239,68,68,.12); color: var(--red); }
+.stat-num { font-weight: 800; font-size: 2rem; color: var(--white); line-height: 1; font-family: var(--mono); }
+.stat-label { font-size: .8rem; color: var(--muted2); font-weight: 500; }
+
+/* ═══════════════════════════════════════════════════
+   TICKETS / TABLE
+═══════════════════════════════════════════════════ */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+thead th {
+  background: var(--card2);
+  color: var(--muted); font-weight: 600; font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .07em;
+  padding: 10px 14px; text-align: left; white-space: nowrap;
+}
+thead th:first-child { border-radius: 8px 0 0 8px; }
+thead th:last-child  { border-radius: 0 8px 8px 0; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+tbody tr:last-child { border: none; }
+tbody tr:hover { background: rgba(255,255,255,.02); }
+tbody td { padding: 12px 14px; color: var(--muted2); vertical-align: middle; }
+tbody td strong { color: var(--text); font-weight: 600; }
+.ticket-id { font-family: var(--mono); font-size: .78rem; color: var(--accent2); font-weight: 500; }
+
+/* ═══════════════════════════════════════════════════
+   BADGES & STATUS
+═══════════════════════════════════════════════════ */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .7rem; font-weight: 600;
+  padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+}
+.badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+.badge-new      { background: rgba(37,99,235,.18); color: #60a5fa; }
+.badge-new::before { background: #60a5fa; }
+.badge-open     { background: rgba(245,158,11,.15); color: var(--orange); }
+.badge-open::before { background: var(--orange); }
+.badge-progress { background: rgba(139,92,246,.15); color: #a78bfa; }
+.badge-progress::before { background: #a78bfa; }
+.badge-resolved { background: rgba(16,185,129,.15); color: var(--green); }
+.badge-resolved::before { background: var(--green); }
+.badge-closed   { background: rgba(100,116,139,.15); color: var(--muted2); }
+.badge-closed::before { background: var(--muted2); }
+.badge-escalated { background: rgba(239,68,68,.15); color: #f87171; }
+.badge-escalated::before { background: #f87171; }
+.level-badge {
+  display: inline-block; font-size: .68rem; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px;
+}
+.n1 { background: rgba(245,158,11,.15); color: var(--orange); }
+.n2 { background: rgba(139,92,246,.15); color: #a78bfa; }
+.n3 { background: rgba(239,68,68,.15); color: #f87171; }
+.prio-badge {
+  display: inline-block; font-size: .7rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+}
+.prio-low    { background: rgba(16,185,129,.1); color: var(--green); }
+.prio-medium { background: rgba(245,158,11,.1); color: var(--orange); }
+.prio-high   { background: rgba(239,68,68,.1);  color: var(--red); }
+.prio-critical { background: rgba(239,68,68,.25); color: #ff6b6b; border: 1px solid rgba(239,68,68,.4); }
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: var(--r);
+  font-family: var(--font); font-size: .83rem; font-weight: 600;
+  cursor: pointer; border: none; transition: all .15s; white-space: nowrap;
+}
+.btn-primary   { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border2); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger    { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+.btn-danger:hover { background: rgba(239,68,68,.25); }
+.btn-sm { padding: 5px 10px; font-size: .75rem; }
+.btn-icon { padding: 7px; }
+
+/* ═══════════════════════════════════════════════════
+   FILTERS / SEARCH BAR
+═══════════════════════════════════════════════════ */
+.filter-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.filter-search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 7px 12px; flex: 1; min-width: 180px;
+}
+.filter-search input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--font); font-size: .85rem; width: 100%;
+}
+.filter-search input::placeholder { color: var(--muted); }
+.filter-select {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--muted2); font-family: var(--font); font-size: .8rem;
+  padding: 7px 12px; border-radius: var(--r); outline: none; cursor: pointer;
+}
+.filter-select:focus { border-color: var(--accent); color: var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: var(--r2); padding: 28px; width: 100%;
+  max-width: 540px; max-height: 90vh; overflow-y: auto;
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-title { font-weight: 800; font-size: 1.1rem; color: var(--white); }
+.modal-close { background: var(--card2); border: 1px solid var(--border); color: var(--muted2); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: .78rem; font-weight: 600; color: var(--muted2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; background: var(--surface); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--font); font-size: .875rem;
+  padding: 9px 12px; border-radius: var(--r); outline: none; transition: border-color .15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ═══════════════════════════════════════════════════
+   MINI CHART (CSS)
+═══════════════════════════════════════════════════ */
+.mini-bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; }
+.bar { flex: 1; border-radius: 4px 4px 0 0; transition: opacity .2s; }
+.bar:hover { opacity: .8; }
+.chart-labels { display: flex; gap: 4px; margin-top: 4px; }
+.chart-label { flex: 1; text-align: center; font-size: .65rem; color: var(--muted); }
+
+/* ═══════════════════════════════════════════════════
+   DONUT CHART (SVG)
+═══════════════════════════════════════════════════ */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--muted2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════
+   PROGRESS BARS
+═══════════════════════════════════════════════════ */
+.progress-row { margin-bottom: 12px; }
+.progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.progress-name { font-size: .82rem; color: var(--text); font-weight: 500; }
+.progress-pct  { font-family: var(--mono); font-size: .78rem; color: var(--muted2); }
+.progress-bar  { height: 6px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+/* ═══════════════════════════════════════════════════
+   TIMELINE (ticket detail)
+═══════════════════════════════════════════════════ */
+.tl { position: relative; padding-left: 24px; }
+.tl::before { content:''; position:absolute; left:7px; top:8px; bottom:0; width:1px; background: var(--border2); }
+.tl-item { position: relative; margin-bottom: 18px; }
+.tl-dot { position:absolute; left:-24px; top:4px; width:14px; height:14px; border-radius:50%; border:2px solid; display:flex; align-items:center; justify-content:center; }
+.tl-time { font-size:.7rem; color:var(--muted); font-family:var(--mono); }
+.tl-text { font-size:.82rem; color:var(--muted2); margin-top:2px; }
+.tl-text strong { color:var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   USER CARDS
+═══════════════════════════════════════════════════ */
+.user-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 20px;
+  display: flex; flex-direction: column; gap: 12px;
+  transition: transform .2s, border-color .2s;
+}
+.user-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+.user-card-header { display: flex; align-items: center; gap: 12px; }
+.user-av-lg {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.1rem; color: #fff; flex-shrink: 0;
+}
+.user-card-name { font-weight: 700; color: var(--white); font-size: .95rem; }
+.user-card-email { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+.user-card-stats { display: flex; gap: 16px; }
+.uc-stat-label { font-size: .7rem; color: var(--muted); }
+.uc-stat-val { font-weight: 700; font-size: 1.1rem; color: var(--text); font-family: var(--mono); }
+.user-card-actions { display: flex; gap: 8px; }
+
+/* ═══════════════════════════════════════════════════
+   EQUIPMENT CARDS
+═══════════════════════════════════════════════════ */
+.equip-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+  transition: transform .15s, border-color .15s;
+}
+.equip-card:hover { transform: translateX(3px); border-color: var(--border2); }
+.equip-icon { font-size: 1.8rem; width: 48px; text-align: center; flex-shrink: 0; }
+.equip-info { flex: 1; min-width: 0; }
+.equip-name { font-weight: 700; color: var(--text); font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.equip-model { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+.equip-meta { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.equip-status { padding: 2px 8px; border-radius: 4px; font-size: .7rem; font-weight: 600; }
+.status-ok { background: rgba(16,185,129,.15); color: var(--green); }
+.status-repair { background: rgba(245,158,11,.15); color: var(--orange); }
+.status-out { background: rgba(239,68,68,.15); color: var(--red); }
+
+/* ═══════════════════════════════════════════════════
+   NOTIFICATIONS
+═══════════════════════════════════════════════════ */
+.notif-item {
+  display: flex; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.notif-item:last-child { border: none; }
+.notif-av {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; flex-shrink: 0;
+}
+.notif-body { flex: 1; }
+.notif-text { font-size: .82rem; color: var(--muted2); line-height: 1.5; }
+.notif-text strong { color: var(--text); }
+.notif-time { font-size: .7rem; color: var(--muted); margin-top: 3px; font-family: var(--mono); }
+.notif-dot-unread { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; margin-top: 4px; }
+
+/* ═══════════════════════════════════════════════════
+   ACTIVITY FEED
+═══════════════════════════════════════════════════ */
+.activity-item {
+  display: flex; gap: 10px; align-items: flex-start; padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border: none; }
+.activity-icon { font-size: .9rem; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.activity-text { font-size: .8rem; color: var(--muted2); flex: 1; line-height: 1.5; }
+.activity-text strong { color: var(--text); }
+.activity-time { font-size: .7rem; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.toast-item {
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: var(--r); padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: .83rem; color: var(--text); font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  animation: toastIn .3s ease;
+  pointer-events: all;
+}
+@keyframes toastIn { from { opacity:0; transform: translateX(24px); } to { opacity:1; transform:translateX(0); } }
+.toast-icon { font-size: 1rem; }
+
+/* ═══════════════════════════════════════════════════
+   TICKET DETAIL PANEL
+═══════════════════════════════════════════════════ */
+.detail-panel {
+  position: fixed; right: 0; top: 0; bottom: 0; width: 460px;
+  background: var(--surface); border-left: 1px solid var(--border);
+  z-index: 150; transform: translateX(100%); transition: transform .3s ease;
+  overflow-y: auto; display: flex; flex-direction: column;
+}
+.detail-panel.open { transform: translateX(0); }
+.detail-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.detail-body { padding: 20px 24px; flex: 1; }
+.detail-section { margin-bottom: 22px; }
+.detail-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.detail-field { }
+.detail-field-label { font-size: .72rem; color: var(--muted); margin-bottom: 3px; }
+.detail-field-value { font-size: .88rem; color: var(--text); font-weight: 500; }
+.comment-input-wrap {
+  display: flex; gap: 8px; padding: 16px 24px;
+  border-top: 1px solid var(--border); background: var(--surface);
+  position: sticky; bottom: 0;
+}
+.comment-input {
+  flex: 1; background: var(--card); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--font); font-size: .83rem;
+  padding: 8px 12px; border-radius: var(--r); outline: none;
+}
+.comment-input:focus { border-color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════
+   REPORTS PAGE
+═══════════════════════════════════════════════════ */
+.report-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  transition: border-color .2s;
+}
+.report-card:hover { border-color: var(--border2); }
+.report-icon { font-size: 2rem; }
+.report-title { font-weight: 700; font-size: 1rem; color: var(--white); }
+.report-desc { font-size: .8rem; color: var(--muted2); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">Gest<span>Inter</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span> Tableau de bord
+    </div>
+    <div class="nav-item" onclick="showPage('tickets',this)">
+      <span class="nav-icon">🎫</span> Tickets
+      <span class="nav-badge">7</span>
+    </div>
+    <div class="nav-item" onclick="showPage('interventions',this)">
+      <span class="nav-icon">🔧</span> Interventions
+      <span class="nav-badge orange">3</span>
+    </div>
+    <div class="nav-section-label" style="margin-top:8px">Gestion</div>
+    <div class="nav-item" onclick="showPage('users',this)">
+      <span class="nav-icon">👥</span> Utilisateurs
+    </div>
+    <div class="nav-item" onclick="showPage('equipment',this)">
+      <span class="nav-icon">🖥️</span> Équipements
+    </div>
+    <div class="nav-item" onclick="showPage('planning',this)">
+      <span class="nav-icon">📅</span> Planning
+    </div>
+    <div class="nav-section-label" style="margin-top:8px">Analyse</div>
+    <div class="nav-item" onclick="showPage('reports',this)">
+      <span class="nav-icon">📈</span> Rapports
+    </div>
+    <div class="nav-item" onclick="showPage('notifications',this)">
+      <span class="nav-icon">🔔</span> Notifications
+      <span class="nav-badge">5</span>
+    </div>
+    <div class="nav-item" onclick="showPage('settings',this)">
+      <span class="nav-icon">⚙️</span> Paramètres
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-av">AD</div>
+      <div>
+        <div class="user-name">Admin Driss</div>
+        <div class="user-role">Administrateur</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════ -->
+<div id="main">
+  <header class="topbar">
+    <div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <div class="topbar-search">
+      <span>🔍</span>
+      <input type="text" placeholder="Rechercher un ticket, utilisateur…" oninput="globalSearch(this.value)">
+    </div>
+    <div class="topbar-btn" onclick="showPage('notifications', document.querySelector('[onclick*=notifications]'))">
+      🔔 <span class="notif-dot"></span>
+    </div>
+    <div class="topbar-btn">👤</div>
+  </header>
+
+  <div class="content">
+
+    <!-- ══════════════════════════════════════════════
+         DASHBOARD
+    ══════════════════════════════════════════════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Bonjour, Admin Driss 👋</div>
+          <div class="page-sub">Mercredi 22 Avril 2026 · Vue d'ensemble du système</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-new-ticket')">+ Nouveau ticket</button>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="grid grid-4" style="margin-bottom:20px">
+        <div class="stat-card blue">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:rgba(37,99,235,.2);">🎫</div>
+            <span class="stat-trend trend-up">↑ 12%</span>
+          </div>
+          <div class="stat-num">47</div>
+          <div class="stat-label">Total tickets</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:rgba(245,158,11,.2);">⏳</div>
+            <span class="stat-trend trend-down">↓ 5%</span>
+          </div>
+          <div class="stat-num">12</div>
+          <div class="stat-label">En cours</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:rgba(16,185,129,.2);">✅</div>
+            <span class="stat-trend trend-up">↑ 8%</span>
+          </div>
+          <div class="stat-num">28</div>
+          <div class="stat-label">Résolus ce mois</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-top">
+            <div class="stat-icon" style="background:rgba(239,68,68,.2);">🚨</div>
+            <span class="stat-trend trend-down">↓ 2%</span>
+          </div>
+          <div class="stat-num">7</div>
+          <div class="stat-label">Tickets urgents</div>
+        </div>
+      </div>
+
+      <!-- Second row -->
+      <div class="grid grid-3" style="margin-bottom:20px">
+        <!-- Tickets par statut (donut) -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Répartition des tickets</div>
+              <div class="card-sub">Par statut actuel</div>
+            </div>
+          </div>
+          <div class="donut-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#1a2440" stroke-width="18"/>
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#2563eb" stroke-width="18"
+                stroke-dasharray="60 191" stroke-dashoffset="0" stroke-linecap="round"/>
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#f59e0b" stroke-width="18"
+                stroke-dasharray="48 191" stroke-dashoffset="-63" stroke-linecap="round"/>
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#10b981" stroke-width="18"
+                stroke-dasharray="56 191" stroke-dashoffset="-114" stroke-linecap="round"/>
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#ef4444" stroke-width="18"
+                stroke-dasharray="28 191" stroke-dashoffset="-173" stroke-linecap="round"/>
+              <text x="55" y="51" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="800" font-family="JetBrains Mono">47</text>
+              <text x="55" y="64" text-anchor="middle" fill="#64748b" font-size="8">tickets</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div>Nouveaux (13)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>En cours (10)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Résolus (17)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Urgents (7)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activité hebdo (bar chart) -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Tickets cette semaine</div>
+              <div class="card-sub">Créés vs résolus</div>
+            </div>
+          </div>
+          <div class="mini-bar-chart" id="weekChart"></div>
+          <div class="chart-labels">
+            <div class="chart-label">Lun</div>
+            <div class="chart-label">Mar</div>
+            <div class="chart-label">Mer</div>
+            <div class="chart-label">Jeu</div>
+            <div class="chart-label">Ven</div>
+            <div class="chart-label">Sam</div>
+            <div class="chart-label">Dim</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div><span style="font-size:.75rem;color:var(--muted2)">Créés</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><span style="font-size:.75rem;color:var(--muted2)">Résolus</span></div>
+          </div>
+        </div>
+
+        <!-- Techniciens perf -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Performance techniciens</div>
+          </div>
+          <div id="techPerf"></div>
+        </div>
+      </div>
+
+      <!-- Tickets récents + activité -->
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Tickets récents</div>
+            <button class="btn btn-secondary btn-sm" onclick="showPage('tickets',document.querySelector('[onclick*=tickets]'))">Voir tout →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Titre</th><th>Statut</th><th>Priorité</th></tr></thead>
+              <tbody id="recent-tickets"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Activité récente</div>
+          </div>
+          <div id="activity-feed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TICKETS
+    ══════════════════════════════════════════════ -->
+    <div id="page-tickets" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Tickets</div>
+          <div class="page-sub" id="ticket-count"></div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-new-ticket')">+ Nouveau ticket</button>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Rechercher…" oninput="filterTickets(this.value)">
+        </div>
+        <select class="filter-select" onchange="filterByStatus(this.value)">
+          <option value="">Tous les statuts</option>
+          <option value="Nouveau">Nouveau</option>
+          <option value="Ouvert">Ouvert</option>
+          <option value="En cours">En cours</option>
+          <option value="Escaladé">Escaladé</option>
+          <option value="Résolu">Résolu</option>
+          <option value="Clôturé">Clôturé</option>
+        </select>
+        <select class="filter-select" onchange="filterByPrio(this.value)">
+          <option value="">Toutes priorités</option>
+          <option value="Critique">Critique</option>
+          <option value="Haute">Haute</option>
+          <option value="Moyenne">Moyenne</option>
+          <option value="Basse">Basse</option>
+        </select>
+        <select class="filter-select" onchange="filterByLevel(this.value)">
+          <option value="">Tous niveaux</option>
+          <option value="N1">N1</option>
+          <option value="N2">N2</option>
+          <option value="N3">N3</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Titre</th><th>Demandeur</th><th>Technicien</th>
+                <th>Niveau</th><th>Statut</th><th>Priorité</th><th>Date</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         INTERVENTIONS
+    ══════════════════════════════════════════════ -->
+    <div id="page-interventions" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Interventions actives</div>
+          <div class="page-sub">Suivi en temps réel des interventions en cours</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-new-ticket')">+ Démarrer intervention</button>
+      </div>
+      <div class="grid grid-3" style="margin-bottom:20px">
+        <div class="stat-card orange">
+          <div class="stat-top"><div class="stat-icon" style="background:rgba(245,158,11,.2);">🔄</div></div>
+          <div class="stat-num">3</div>
+          <div class="stat-label">Interventions actives</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-top"><div class="stat-icon" style="background:rgba(37,99,235,.2);">⏱️</div></div>
+          <div class="stat-num">2h14</div>
+          <div class="stat-label">Durée moyenne</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-top"><div class="stat-icon" style="background:rgba(16,185,129,.2);">📋</div></div>
+          <div class="stat-num">94%</div>
+          <div class="stat-label">Taux de résolution N1</div>
+        </div>
+      </div>
+      <div class="grid grid-2" id="interventions-list"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         UTILISATEURS
+    ══════════════════════════════════════════════ -->
+    <div id="page-users" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Utilisateurs</div>
+          <div class="page-sub">Gestion des comptes et des rôles</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-new-user')">+ Ajouter utilisateur</button>
+      </div>
+      <div class="filter-bar" style="margin-bottom:20px">
+        <div class="filter-search">
+          <span>🔍</span>
+          <input type="text" placeholder="Rechercher un utilisateur…">
+        </div>
+        <select class="filter-select">
+          <option>Tous les rôles</option>
+          <option>Administrateur</option>
+          <option>Demandeur</option>
+          <option>Technicien N1</option>
+          <option>Technicien N2</option>
+          <option>Technicien N3</option>
+        </select>
+      </div>
+      <div class="grid grid-3" id="users-grid"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ÉQUIPEMENTS
+    ══════════════════════════════════════════════ -->
+    <div id="page-equipment" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Équipements</div>
+          <div class="page-sub">Inventaire et état du matériel</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-new-equip')">+ Ajouter équipement</button>
+      </div>
+      <div class="grid grid-4" style="margin-bottom:20px">
+        <div class="stat-card blue">
+          <div class="stat-top"><div class="stat-icon" style="background:rgba(37,99,235,.2);">🖥️</div></div>
+          <div class="stat-num">84</div><div class="stat-label">Total équipements</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-top"><div class="stat-icon" style="background:rgba(16,185,129,.2);">✅</div></div>
+          <div class="stat-num">71</div><div class="stat-label">Opérationnels</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-top"><div class="stat-icon" style="background:rgba(245,158,11,.2);">🔧</div></div>
+          <div class="stat-num">9</div><div class="stat-label">En réparation</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-top"><div class="stat-icon" style="background:rgba(239,68,68,.2);">❌</div></div>
+          <div class="stat-num">4</div><div class="stat-label">Hors service</div>
+        </div>
+      </div>
+      <div class="grid grid-2" id="equipment-list"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         PLANNING
+    ══════════════════════════════════════════════ -->
+    <div id="page-planning" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Planning</div><div class="page-sub">Planification des interventions — Avril 2026</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-new-ticket')">+ Planifier</button>
+      </div>
+      <div class="grid grid-2">
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-title" style="margin-bottom:16px">Calendrier — Semaine 17</div>
+          <div id="planning-calendar"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Interventions planifiées</div>
+          <div id="planned-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Disponibilité techniciens</div>
+          <div id="tech-availability"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         RAPPORTS
+    ══════════════════════════════════════════════ -->
+    <div id="page-reports" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Rapports</div><div class="page-sub">Générer et exporter des rapports d'analyse</div></div>
+      </div>
+      <div class="grid grid-3" style="margin-bottom:24px">
+        <div class="report-card">
+          <div class="report-icon">📊</div>
+          <div class="report-title">Rapport mensuel</div>
+          <div class="report-desc">Synthèse complète des interventions du mois en cours avec statistiques et indicateurs clés.</div>
+          <button class="btn btn-primary btn-sm" onclick="toast('📄 Rapport mensuel généré avec succès !', 'green')">Générer PDF</button>
+        </div>
+        <div class="report-card">
+          <div class="report-icon">⏱️</div>
+          <div class="report-title">Performance techniciens</div>
+          <div class="report-desc">Temps de résolution, taux de satisfaction et nombre de tickets traités par technicien.</div>
+          <button class="btn btn-primary btn-sm" onclick="toast('📄 Rapport performance généré !', 'green')">Générer PDF</button>
+        </div>
+        <div class="report-card">
+          <div class="report-icon">🔧</div>
+          <div class="report-title">État des équipements</div>
+          <div class="report-desc">Inventaire complet avec état, historique des pannes et coûts de maintenance par équipement.</div>
+          <button class="btn btn-primary btn-sm" onclick="toast('📄 Rapport équipements généré !', 'green')">Générer PDF</button>
+        </div>
+        <div class="report-card">
+          <div class="report-icon">📈</div>
+          <div class="report-title">Tendances & KPI</div>
+          <div class="report-desc">Analyse des tendances sur 6 mois, délais moyens de résolution et satisfaction client.</div>
+          <button class="btn btn-primary btn-sm" onclick="toast('📄 Rapport KPI généré !', 'green')">Exporter Excel</button>
+        </div>
+        <div class="report-card">
+          <div class="report-icon">📋</div>
+          <div class="report-title">Rapport d'escalade</div>
+          <div class="report-desc">Analyse des escalades N1→N2→N3, causes fréquentes et recommandations d'amélioration.</div>
+          <button class="btn btn-primary btn-sm" onclick="toast('📄 Rapport escalade généré !', 'green')">Générer PDF</button>
+        </div>
+        <div class="report-card">
+          <div class="report-icon">🗃️</div>
+          <div class="report-title">Export données brutes</div>
+          <div class="report-desc">Export CSV/Excel de tous les tickets, interventions et logs pour analyse externe.</div>
+          <button class="btn btn-secondary btn-sm" onclick="toast('📦 Export CSV lancé !', 'blue')">Exporter CSV</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Résumé mensuel — Avril 2026</div>
+        </div>
+        <div class="grid grid-4">
+          <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">Tickets créés</div><div style="font-size:1.8rem;font-weight:800;color:var(--white);font-family:var(--mono)">47</div></div>
+          <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">Tickets résolus</div><div style="font-size:1.8rem;font-weight:800;color:var(--green);font-family:var(--mono)">38</div></div>
+          <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">Délai moyen</div><div style="font-size:1.8rem;font-weight:800;color:var(--orange);font-family:var(--mono)">3.2h</div></div>
+          <div><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">Satisfaction</div><div style="font-size:1.8rem;font-weight:800;color:var(--teal);font-family:var(--mono)">4.6★</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         NOTIFICATIONS
+    ══════════════════════════════════════════════ -->
+    <div id="page-notifications" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Notifications</div><div class="page-sub">5 nouvelles notifications</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="toast('✅ Toutes les notifications marquées comme lues', 'green')">Tout marquer lu</button>
+      </div>
+      <div class="card" id="notif-list"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         PARAMÈTRES
+    ══════════════════════════════════════════════ -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Paramètres</div><div class="page-sub">Configuration du système</div></div>
+        <button class="btn btn-primary" onclick="toast('✅ Paramètres sauvegardés !', 'green')">Sauvegarder</button>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px">Profil administrateur</div>
+          <div class="form-group"><label class="form-label">Nom complet</label><input class="form-input" value="Aït Omar Driss"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" value="a.driss@ocpgroup.ma"></div>
+          <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" value="+212 5 23 XX XX XX"></div>
+          <div class="form-group"><label class="form-label">Nouveau mot de passe</label><input class="form-input" type="password" placeholder="••••••••"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px">Configuration SLA</div>
+          <div class="form-group"><label class="form-label">Délai N1 (heures)</label><input class="form-input" type="number" value="4"></div>
+          <div class="form-group"><label class="form-label">Délai N2 (heures)</label><input class="form-input" type="number" value="8"></div>
+          <div class="form-group"><label class="form-label">Délai N3 (heures)</label><input class="form-input" type="number" value="24"></div>
+          <div class="form-group"><label class="form-label">Escalade auto (heures)</label><input class="form-input" type="number" value="2"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px">Notifications email</div>
+          <div style="display:flex;flex-direction:column;gap:10px" id="settings-toggles"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px">Informations système</div>
+          <div style="display:flex;flex-direction:column;gap:10px" id="sys-info"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══════════════════════════════════════════════════
+     TICKET DETAIL PANEL
+═══════════════════════════════════════════════════ -->
+<div id="detail-panel" class="detail-panel">
+  <div class="detail-header">
+    <div style="flex:1">
+      <div id="detail-id" class="ticket-id" style="margin-bottom:4px"></div>
+      <div id="detail-title" style="font-weight:700;color:var(--white);font-size:1rem"></div>
+    </div>
+    <button class="btn btn-secondary btn-icon" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="detail-body">
+    <div class="detail-section">
+      <div class="detail-section-title">Statut & Priorité</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="detail-badges"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Informations</div>
+      <div class="detail-grid" id="detail-info"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Description</div>
+      <div id="detail-desc" style="font-size:.85rem;color:var(--muted2);line-height:1.7;background:var(--card);border-radius:var(--r);padding:12px;border:1px solid var(--border)"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Historique</div>
+      <div class="tl" id="detail-tl"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Actions rapides</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="detail-actions"></div>
+    </div>
+  </div>
+  <div class="comment-input-wrap">
+    <input class="comment-input" placeholder="Ajouter un commentaire…" id="comment-input">
+    <button class="btn btn-primary btn-sm" onclick="addComment()">Envoyer</button>
+  </div>
+</div>
+<div id="panel-overlay" style="position:fixed;inset:0;z-index:149;background:rgba(0,0,0,.5);display:none;backdrop-filter:blur(2px)" onclick="closeDetail()"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════ -->
+<!-- New Ticket -->
+<div id="modal-new-ticket" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎫 Nouveau ticket</div>
+      <button class="modal-close" onclick="closeModal('modal-new-ticket')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Titre *</label><input class="form-input" id="nt-title" placeholder="Décrivez brièvement le problème…"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Demandeur</label>
+        <select class="form-select" id="nt-dem">
+          <option>Karim Benali</option><option>Fatima Zohra</option><option>Omar Slimani</option>
+          <option>Nadia Chraibi</option><option>Hassan Benmoussa</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Priorité</label>
+        <select class="form-select" id="nt-prio">
+          <option>Basse</option><option selected>Moyenne</option><option>Haute</option><option>Critique</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Catégorie</label>
+        <select class="form-select" id="nt-cat">
+          <option>Matériel</option><option>Logiciel</option><option>Réseau</option><option>Imprimante</option><option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Niveau initial</label>
+        <select class="form-select" id="nt-level">
+          <option>N1</option><option>N2</option><option>N3</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Équipement concerné</label>
+      <input class="form-input" id="nt-equip" placeholder="Modèle, numéro de série…">
+    </div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <textarea class="form-textarea" id="nt-desc" placeholder="Décrivez le problème en détail…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-ticket')">Annuler</button>
+      <button class="btn btn-primary" onclick="createTicket()">Créer le ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- New User -->
+<div id="modal-new-user" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Ajouter un utilisateur</div>
+      <button class="modal-close" onclick="closeModal('modal-new-user')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Prénom *</label><input class="form-input" id="nu-fname" placeholder="Prénom"></div>
+      <div class="form-group"><label class="form-label">Nom *</label><input class="form-input" id="nu-lname" placeholder="Nom"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="nu-email" placeholder="prenom.nom@ocpgroup.ma" type="email"></div>
+    <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="nu-phone" placeholder="+212 6 XX XX XX XX"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Rôle *</label>
+        <select class="form-select" id="nu-role">
+          <option>Demandeur</option><option>Technicien N1</option><option>Technicien N2</option><option>Technicien N3</option><option>Administrateur</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Département</label>
+        <select class="form-select" id="nu-dept">
+          <option>Informatique</option><option>Production</option><option>Finance</option><option>RH</option><option>Logistique</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-user')">Annuler</button>
+      <button class="btn btn-primary" onclick="createUser()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Equipment -->
+<div id="modal-new-equip" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🖥️ Ajouter un équipement</div>
+      <button class="modal-close" onclick="closeModal('modal-new-equip')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Nom / Désignation *</label><input class="form-input" id="ne-name" placeholder="Ex: PC Bureau Dell OptiPlex"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="ne-type">
+          <option>Ordinateur</option><option>Serveur</option><option>Imprimante</option><option>Switch</option><option>Téléphone</option><option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Marque / Modèle</label><input class="form-input" id="ne-model" placeholder="Dell OptiPlex 7090"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">N° Série</label><input class="form-input" id="ne-serial" placeholder="SN-XXXXXXXX"></div>
+      <div class="form-group"><label class="form-label">Localisation</label><input class="form-input" id="ne-loc" placeholder="Bâtiment A, Bureau 12"></div>
+    </div>
+    <div class="form-group"><label class="form-label">État</label>
+      <select class="form-select" id="ne-status">
+        <option value="ok">Opérationnel</option><option value="repair">En réparation</option><option value="out">Hors service</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-equip')">Annuler</button>
+      <button class="btn btn-primary" onclick="createEquip()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════ -->
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────
+let tickets = [
+  { id:'TKT-001', title:'PC ne démarre plus au bureau 214', dem:'Karim Benali', tech:'Ahmed Samir', level:'N1', status:'En cours', prio:'Haute', cat:'Matériel', date:'22/04/2026 08:30', desc:'Le PC de Karim Benali ne démarre plus depuis ce matin. Lors de la mise sous tension, on entend 3 bips courts et l\'écran reste noir. La machine est une Dell OptiPlex 7090.', equip:'Dell OptiPlex 7090 - SN-00234' },
+  { id:'TKT-002', title:'Imprimante HP bloquée réseau', dem:'Fatima Zohra', tech:'Mohamed Tazi', level:'N2', status:'Escaladé', prio:'Critique', cat:'Imprimante', date:'22/04/2026 09:15', desc:'L\'imprimante HP LaserJet du service RH est inaccessible depuis le réseau. Les 6 postes du département ne peuvent plus imprimer. Une intervention physique est nécessaire.', equip:'HP LaserJet Pro M404dn' },
+  { id:'TKT-003', title:'Écran bleu Windows après mise à jour', dem:'Omar Slimani', tech:'Ahmed Samir', level:'N1', status:'Nouveau', prio:'Moyenne', cat:'Logiciel', date:'22/04/2026 10:00', desc:'Après la mise à jour Windows effectuée hier soir, l\'ordinateur affiche un écran bleu (BSOD) avec l\'erreur DRIVER_IRQL_NOT_LESS_OR_EQUAL. Le système redémarre en boucle.', equip:'Lenovo ThinkPad X1 Carbon' },
+  { id:'TKT-004', title:'Remplacement disque dur serveur production', dem:'Hassan Benmoussa', tech:'Younes Alaoui', level:'N3', status:'En cours', prio:'Critique', cat:'Serveur', date:'21/04/2026 14:20', desc:'Le disque dur principal du serveur de production PROD-SRV-02 présente des secteurs défectueux. Un remplacement urgent est nécessaire pour éviter la perte de données.', equip:'Serveur Dell PowerEdge R740' },
+  { id:'TKT-005', title:'VPN impossible à se connecter', dem:'Nadia Chraibi', tech:'Mohamed Tazi', level:'N1', status:'Résolu', prio:'Haute', cat:'Réseau', date:'21/04/2026 11:30', desc:'Nadia Chraibi ne peut pas se connecter au VPN de l\'entreprise depuis son domicile. Le client Cisco AnyConnect affiche l\'erreur "Authentication failed".', equip:'N/A - Problème logiciel' },
+  { id:'TKT-006', title:'Mise à jour antivirus entreprise', dem:'Admin système', tech:'Ahmed Samir', level:'N1', status:'Clôturé', prio:'Basse', cat:'Logiciel', date:'20/04/2026 09:00', desc:'Déploiement de la mise à jour de la solution antivirus Kaspersky Endpoint Security sur l\'ensemble des postes du département Finance (23 postes).', equip:'23 postes - Bâtiment Finance' },
+  { id:'TKT-007', title:'Switch réseau salle serveur HS', dem:'Admin réseau', tech:'Younes Alaoui', level:'N3', status:'En cours', prio:'Critique', cat:'Réseau', date:'22/04/2026 07:45', desc:'Le switch Cisco Catalyst 2960 de la salle serveur principale est tombé en panne. 4 serveurs sont isolés du réseau. Une intervention d\'urgence est requise.', equip:'Cisco Catalyst 2960-24TT' },
+  { id:'TKT-008', title:'Outlook ne se synchronise plus', dem:'Sara Idrissi', tech:'Ahmed Samir', level:'N1', status:'Nouveau', prio:'Moyenne', cat:'Logiciel', date:'22/04/2026 11:20', desc:'Microsoft Outlook ne reçoit plus les emails depuis hier. Le compte est configuré en Exchange Online. Le webmail Outlook.com fonctionne correctement.', equip:'HP EliteBook 840 G8' },
+];
+
+let users = [
+  { name:'Ahmed Samir', email:'a.samir@ocpgroup.ma', role:'Technicien N1', dept:'Informatique', tickets:18, resolved:15, color:'#2563eb' },
+  { name:'Mohamed Tazi', email:'m.tazi@ocpgroup.ma', role:'Technicien N2', dept:'Informatique', tickets:12, resolved:10, color:'#8b5cf6' },
+  { name:'Younes Alaoui', email:'y.alaoui@ocpgroup.ma', role:'Technicien N3', dept:'Informatique', tickets:6, resolved:5, color:'#ef4444' },
+  { name:'Karim Benali', email:'k.benali@ocpgroup.ma', role:'Demandeur', dept:'Production', tickets:5, resolved:0, color:'#10b981' },
+  { name:'Fatima Zohra', email:'f.zohra@ocpgroup.ma', role:'Demandeur', dept:'RH', tickets:3, resolved:0, color:'#f59e0b' },
+  { name:'Omar Slimani', email:'o.slimani@ocpgroup.ma', role:'Demandeur', dept:'Finance', tickets:4, resolved:0, color:'#06b6d4' },
+  { name:'Nadia Chraibi', email:'n.chraibi@ocpgroup.ma', role:'Demandeur', dept:'Logistique', tickets:2, resolved:0, color:'#f97316' },
+  { name:'Admin Driss', email:'a.driss@ocpgroup.ma', role:'Administrateur', dept:'Informatique', tickets:0, resolved:0, color:'#ec4899' },
+];
+
+let equipment = [
+  { icon:'🖥️', name:'PC Dell OptiPlex 7090', model:'Dell OptiPlex 7090', serial:'SN-00234', loc:'Bâtiment A, Bureau 214', status:'repair' },
+  { icon:'🖨️', name:'Imprimante HP LaserJet Pro', model:'HP LaserJet Pro M404dn', serial:'SN-HP-891', loc:'RH, Bâtiment B', status:'repair' },
+  { icon:'💻', name:'Laptop Lenovo ThinkPad X1', model:'ThinkPad X1 Carbon Gen 9', serial:'SN-LEN-456', loc:'Finance, Bureau 105', status:'repair' },
+  { icon:'🖧', name:'Serveur Dell PowerEdge R740', model:'Dell PowerEdge R740', serial:'PROD-SRV-02', loc:'Salle serveur principale', status:'repair' },
+  { icon:'🔌', name:'Switch Cisco Catalyst 2960', model:'Cisco Catalyst 2960-24TT', serial:'SW-CORE-01', loc:'Salle serveur principale', status:'out' },
+  { icon:'🖥️', name:'PC HP EliteDesk 800', model:'HP EliteDesk 800 G6', serial:'SN-HP-123', loc:'Production, Bureau 301', status:'ok' },
+  { icon:'💻', name:'Laptop HP EliteBook 840', model:'HP EliteBook 840 G8', serial:'SN-HP-789', loc:'Logistique, Bureau 205', status:'ok' },
+  { icon:'🖨️', name:'Imprimante Xerox B215', model:'Xerox B215', serial:'SN-XRX-344', loc:'Finance, Couloir', status:'ok' },
+  { icon:'📱', name:'Téléphone IP Cisco', model:'Cisco IP Phone 8841', serial:'SN-CIS-007', loc:'Direction, Bureau 501', status:'ok' },
+  { icon:'🖧', name:'Serveur HP ProLiant DL380', model:'HP ProLiant DL380 Gen10', serial:'FILE-SRV-01', loc:'Salle serveur principale', status:'ok' },
+];
+
+let notifications = [
+  { icon:'🔴', bg:'rgba(239,68,68,.15)', text:'<strong>Ticket TKT-002</strong> escaladé vers N2 — Imprimante HP bloquée réseau', time:'il y a 15 min', unread:true },
+  { icon:'🟡', bg:'rgba(245,158,11,.15)', text:'<strong>SLA dépassé</strong> — Ticket TKT-004 dépasse 4h sans résolution', time:'il y a 32 min', unread:true },
+  { icon:'✅', bg:'rgba(16,185,129,.15)', text:'<strong>Ticket TKT-005</strong> résolu par Mohamed Tazi', time:'il y a 1h', unread:true },
+  { icon:'🔔', bg:'rgba(37,99,235,.15)', text:'<strong>Younes Alaoui</strong> a démarré l\'intervention sur TKT-007', time:'il y a 2h', unread:true },
+  { icon:'💬', bg:'rgba(139,92,246,.15)', text:'<strong>Ahmed Samir</strong> a ajouté un commentaire sur TKT-001', time:'il y a 3h', unread:true },
+  { icon:'📋', bg:'rgba(6,182,212,.15)', text:'<strong>Rapport mensuel</strong> disponible pour téléchargement', time:'il y a 5h', unread:false },
+  { icon:'👤', bg:'rgba(249,115,22,.15)', text:'<strong>Sara Idrissi</strong> a créé un nouveau compte demandeur', time:'Hier, 16:30', unread:false },
+];
+
+const activities = [
+  { icon:'🎫', bg:'rgba(37,99,235,.15)', text:'<strong>TKT-008</strong> créé par Sara Idrissi', time:'11:20' },
+  { icon:'🔄', bg:'rgba(239,68,68,.15)', text:'<strong>TKT-002</strong> escaladé N1→N2', time:'09:15' },
+  { icon:'✅', bg:'rgba(16,185,129,.15)', text:'<strong>TKT-005</strong> résolu et clôturé', time:'09:00' },
+  { icon:'🔧', bg:'rgba(245,158,11,.15)', text:'Ahmed Samir a démarré <strong>TKT-001</strong>', time:'08:45' },
+  { icon:'📋', bg:'rgba(139,92,246,.15)', text:'Rapport mensuel généré automatiquement', time:'08:00' },
+];
+
+// ─── NAVIGATION ─────────────────────────────────────────────────────────────
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = { dashboard:'Tableau de bord', tickets:'Tickets', interventions:'Interventions', users:'Utilisateurs', equipment:'Équipements', planning:'Planning', reports:'Rapports', notifications:'Notifications', settings:'Paramètres' };
+  document.getElementById('topbar-title').textContent = titles[name] || name;
+  closeDetail();
+}
+
+// ─── RENDER FUNCTIONS ────────────────────────────────────────────────────────
+function statusBadge(s) {
+  const m = { 'Nouveau':'badge-new','Ouvert':'badge-open','En cours':'badge-progress','Escaladé':'badge-escalated','Résolu':'badge-resolved','Clôturé':'badge-closed' };
+  return `<span class="badge ${m[s]||'badge-new'}">${s}</span>`;
+}
+function prioBadge(p) {
+  const m = { 'Basse':'prio-low','Moyenne':'prio-medium','Haute':'prio-high','Critique':'prio-critical' };
+  return `<span class="prio-badge ${m[p]||'prio-medium'}">${p}</span>`;
+}
+function levelBadge(l) {
+  return `<span class="level-badge ${l.toLowerCase()}">${l}</span>`;
+}
+
+function renderTicketsTable(list) {
+  const tbody = document.getElementById('tickets-table');
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--muted)">Aucun ticket trouvé</td></tr>`; return; }
+  tbody.innerHTML = list.map(t => `
+    <tr onclick="openDetail('${t.id}')" style="cursor:pointer">
+      <td class="ticket-id">${t.id}</td>
+      <td><strong>${t.title}</strong></td>
+      <td>${t.dem}</td>
+      <td>${t.tech}</td>
+      <td>${levelBadge(t.level)}</td>
+      <td>${statusBadge(t.status)}</td>
+      <td>${prioBadge(t.prio)}</td>
+      <td style="font-family:var(--mono);font-size:.75rem">${t.date}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();openDetail('${t.id}')" title="Détail">👁</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();escalate('${t.id}')" title="Escalader">⬆</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteTicket('${t.id}')" title="Supprimer">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+  document.getElementById('ticket-count').textContent = `${list.length} ticket(s) trouvé(s)`;
+}
+
+function renderRecentTickets() {
+  const el = document.getElementById('recent-tickets');
+  el.innerHTML = tickets.slice(0,5).map(t => `
+    <tr onclick="openDetail('${t.id}')" style="cursor:pointer">
+      <td class="ticket-id">${t.id}</td>
+      <td><strong style="font-size:.82rem">${t.title.substring(0,28)}…</strong></td>
+      <td>${statusBadge(t.status)}</td>
+      <td>${prioBadge(t.prio)}</td>
+    </tr>`).join('');
+}
+
+function renderWeekChart() {
+  const created  = [8, 5, 12, 6, 9, 3, 4];
+  const resolved = [6, 4, 10, 5, 8, 2, 3];
+  const max = Math.max(...created, ...resolved);
+  const el = document.getElementById('weekChart');
+  el.innerHTML = created.map((c,i) => `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">
+      <div class="bar" style="height:${(c/max)*55}px;background:#2563eb;width:100%"></div>
+      <div class="bar" style="height:${(resolved[i]/max)*55}px;background:#10b981;width:100%"></div>
+    </div>`).join('');
+}
+
+function renderTechPerf() {
+  const data = [
+    { name:'Ahmed Samir', pct:94, color:'#2563eb' },
+    { name:'Mohamed Tazi', pct:87, color:'#8b5cf6' },
+    { name:'Younes Alaoui', pct:78, color:'#ef4444' },
+  ];
+  document.getElementById('techPerf').innerHTML = data.map(d => `
+    <div class="progress-row">
+      <div class="progress-top">
+        <span class="progress-name">${d.name}</span>
+        <span class="progress-pct">${d.pct}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${d.pct}%;background:${d.color}"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderActivity() {
+  document.getElementById('activity-feed').innerHTML = activities.map(a => `
+    <div class="activity-item">
+      <div class="activity-icon" style="background:${a.bg}">${a.icon}</div>
+      <div class="activity-text">${a.text}</div>
+      <div class="activity-time">${a.time}</div>
+    </div>`).join('');
+}
+
+function renderUsers() {
+  const colors = { 'Administrateur':'#ec4899', 'Technicien N1':'#2563eb', 'Technicien N2':'#8b5cf6', 'Technicien N3':'#ef4444', 'Demandeur':'#10b981' };
+  const icons  = { 'Administrateur':'⚙️', 'Technicien N1':'💻', 'Technicien N2':'🔧', 'Technicien N3':'⚙️', 'Demandeur':'👤' };
+  document.getElementById('users-grid').innerHTML = users.map(u => `
+    <div class="user-card">
+      <div class="user-card-header">
+        <div class="user-av-lg" style="background:${u.color}">${u.name.split(' ').map(w=>w[0]).join('')}</div>
+        <div>
+          <div class="user-card-name">${u.name}</div>
+          <div class="user-card-email">${u.email}</div>
+          <div style="margin-top:5px">
+            <span class="badge" style="background:${u.color}22;color:${u.color};border:1px solid ${u.color}44;font-size:.68rem">${icons[u.role]||'👤'} ${u.role}</span>
+          </div>
+        </div>
+      </div>
+      <div class="user-card-stats">
+        <div><div class="uc-stat-label">Dept.</div><div style="font-size:.82rem;color:var(--text);font-weight:500">${u.dept}</div></div>
+        ${u.tickets>0?`<div><div class="uc-stat-label">Tickets</div><div class="uc-stat-val">${u.tickets}</div></div><div><div class="uc-stat-label">Résolus</div><div class="uc-stat-val">${u.resolved}</div></div>`:''}
+      </div>
+      <div class="user-card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="toast('✉️ Email envoyé à ${u.name}', 'blue')">📧 Email</button>
+        <button class="btn btn-secondary btn-sm" onclick="toast('✏️ Modification de ${u.name}', 'blue')">✏️ Éditer</button>
+        <button class="btn btn-danger btn-sm" onclick="removeUser('${u.email}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderEquipment() {
+  const statusLabel = { ok:'Opérationnel', repair:'En réparation', out:'Hors service' };
+  const statusClass = { ok:'status-ok', repair:'status-repair', out:'status-out' };
+  document.getElementById('equipment-list').innerHTML = equipment.map((e,i) => `
+    <div class="equip-card">
+      <div class="equip-icon">${e.icon}</div>
+      <div class="equip-info">
+        <div class="equip-name">${e.name}</div>
+        <div class="equip-model">${e.model} · ${e.loc}</div>
+        <div class="equip-meta">
+          <span class="equip-status ${statusClass[e.status]}">${statusLabel[e.status]}</span>
+          <span style="font-size:.7rem;color:var(--muted);font-family:var(--mono)">${e.serial}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button class="btn btn-secondary btn-sm" onclick="toast('📋 Historique de ${e.name}', 'blue')">📋</button>
+        <button class="btn btn-danger btn-sm" onclick="toast('🗑 Équipement supprimé', 'red')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderInterventions() {
+  const active = tickets.filter(t => t.status === 'En cours' || t.status === 'Escaladé');
+  const timeMap = { 'TKT-001':'2h 14m', 'TKT-002':'1h 05m', 'TKT-004':'9h 40m', 'TKT-007':'0h 35m' };
+  document.getElementById('interventions-list').innerHTML = active.map(t => `
+    <div class="card" style="cursor:pointer" onclick="openDetail('${t.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div class="ticket-id" style="margin-bottom:4px">${t.id}</div>
+          <div style="font-weight:700;color:var(--white);font-size:.95rem">${t.title}</div>
+        </div>
+        ${statusBadge(t.status)}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        ${levelBadge(t.level)} ${prioBadge(t.prio)}
+        <span style="font-size:.75rem;color:var(--muted);font-family:var(--mono)">⏱ ${timeMap[t.id]||'—'}</span>
+      </div>
+      <div style="font-size:.82rem;color:var(--muted2)">👤 ${t.tech} · ${t.dem}</div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();resolveTicket('${t.id}')">✅ Résoudre</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();escalate('${t.id}')">⬆ Escalader</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();toast('📋 Rapport ouvert','blue')">📋 Rapport</button>
+      </div>
+    </div>`).join('') || `<div class="card" style="text-align:center;padding:40px;color:var(--muted)">✅ Aucune intervention active</div>`;
+}
+
+function renderNotifications() {
+  document.getElementById('notif-list').innerHTML = notifications.map(n => `
+    <div class="notif-item">
+      <div class="notif-av" style="background:${n.bg}">${n.icon}</div>
+      <div class="notif-body">
+        <div class="notif-text">${n.text}</div>
+        <div class="notif-time">${n.time}</div>
+      </div>
+      ${n.unread ? '<div class="notif-dot-unread"></div>' : ''}
+    </div>`).join('');
+}
+
+function renderPlanning() {
+  const days = ['Lun 21', 'Mar 22', 'Mer 23', 'Jeu 24', 'Ven 25'];
+  const techs = ['Ahmed Samir', 'Mohamed Tazi', 'Younes Alaoui'];
+  const events = [
+    { day:1, tech:0, label:'TKT-001 · N1', color:'#2563eb' },
+    { day:1, tech:1, label:'TKT-002 · N2', color:'#8b5cf6' },
+    { day:1, tech:2, label:'TKT-007 · N3', color:'#ef4444' },
+    { day:2, tech:2, label:'TKT-004 · N3', color:'#f59e0b' },
+    { day:3, tech:0, label:'TKT-008 · N1', color:'#10b981' },
+    { day:4, tech:1, label:'Maintenance · N2', color:'#06b6d4' },
+  ];
+  const grid = document.getElementById('planning-calendar');
+  grid.innerHTML = `
+    <div style="display:grid;grid-template-columns:120px repeat(5,1fr);gap:1px;background:var(--border);border-radius:var(--r);overflow:hidden">
+      <div style="background:var(--card2);padding:8px 12px;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase">Technicien</div>
+      ${days.map(d=>`<div style="background:var(--card2);padding:8px;text-align:center;font-size:.8rem;font-weight:600;color:var(--text)">${d}</div>`).join('')}
+      ${techs.map((t,ti)=>`
+        <div style="background:var(--card);padding:8px 12px;font-size:.8rem;font-weight:600;color:var(--text)">${t}</div>
+        ${days.map((_,di)=>{
+          const ev = events.find(e=>e.day===di&&e.tech===ti);
+          return `<div style="background:var(--card);padding:6px;min-height:50px;display:flex;align-items:center;justify-content:center">
+            ${ev?`<span style="background:${ev.color}22;color:${ev.color};border:1px solid ${ev.color}44;font-size:.7rem;font-weight:600;padding:3px 7px;border-radius:5px;white-space:nowrap">${ev.label}</span>`:''}
+          </div>`;
+        }).join('')}`).join('')}
+    </div>`;
+
+  document.getElementById('planned-list').innerHTML = [
+    { label:'TKT-001', date:'Auj. 08:30', who:'Ahmed Samir', prio:'Haute' },
+    { label:'TKT-002', date:'Auj. 09:15', who:'Mohamed Tazi', prio:'Critique' },
+    { label:'TKT-007', date:'Auj. 07:45', who:'Younes Alaoui', prio:'Critique' },
+    { label:'TKT-004', date:'Dem. 10:00', who:'Younes Alaoui', prio:'Critique' },
+    { label:'TKT-008', date:'Mer. 14:00', who:'Ahmed Samir', prio:'Moyenne' },
+  ].map(p=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1"><div class="ticket-id">${p.label}</div><div style="font-size:.78rem;color:var(--muted2)">${p.who}</div></div>
+      <div style="font-size:.75rem;color:var(--muted);font-family:var(--mono)">${p.date}</div>
+      ${prioBadge(p.prio)}
+    </div>`).join('');
+
+  document.getElementById('tech-availability').innerHTML = [
+    { name:'Ahmed Samir', slots:3, status:'Disponible' },
+    { name:'Mohamed Tazi', slots:1, status:'Occupé' },
+    { name:'Younes Alaoui', slots:0, status:'Plein' },
+  ].map(t=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--text)">${t.name}</div>
+        <div style="font-size:.72rem;color:var(--muted)">${t.slots} créneaux libres</div></div>
+      <span style="font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:4px;${
+        t.status==='Disponible'?'background:rgba(16,185,129,.15);color:var(--green)':
+        t.status==='Occupé'?'background:rgba(245,158,11,.15);color:var(--orange)':
+        'background:rgba(239,68,68,.15);color:var(--red)'}">${t.status}</span>
+    </div>`).join('');
+}
+
+function renderSettings() {
+  const toggles = ['Nouveau ticket', 'Escalade ticket', 'Ticket résolu', 'SLA dépassé', 'Rapport hebdo'];
+  document.getElementById('settings-toggles').innerHTML = toggles.map(t=>`
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:.85rem;color:var(--text)">${t}</span>
+      <label style="cursor:pointer;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" checked style="accent-color:var(--accent);width:16px;height:16px">
+        <span style="font-size:.75rem;color:var(--muted2)">Activé</span>
+      </label>
+    </div>`).join('');
+  document.getElementById('sys-info').innerHTML = [
+    { k:'Version', v:'GestInter v2.4.1' },
+    { k:'Base de données', v:'MySQL 8.0.32' },
+    { k:'Serveur', v:'OCP-PROD-WEB-01' },
+    { k:'Dernier backup', v:'22/04/2026 03:00' },
+    { k:'Uptime', v:'99.8% (30 jours)' },
+  ].map(({k,v})=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:.8rem;color:var(--muted)">${k}</span>
+      <span style="font-size:.8rem;font-weight:600;color:var(--text);font-family:var(--mono)">${v}</span>
+    </div>`).join('');
+}
+
+// ─── DETAIL PANEL ────────────────────────────────────────────────────────────
+function openDetail(id) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('detail-id').textContent = t.id;
+  document.getElementById('detail-title').textContent = t.title;
+  document.getElementById('detail-desc').textContent = t.desc;
+  document.getElementById('detail-badges').innerHTML = `${statusBadge(t.status)} ${prioBadge(t.prio)} ${levelBadge(t.level)}`;
+  document.getElementById('detail-info').innerHTML = `
+    <div class="detail-field"><div class="detail-field-label">Demandeur</div><div class="detail-field-value">${t.dem}</div></div>
+    <div class="detail-field"><div class="detail-field-label">Technicien</div><div class="detail-field-value">${t.tech}</div></div>
+    <div class="detail-field"><div class="detail-field-label">Catégorie</div><div class="detail-field-value">${t.cat}</div></div>
+    <div class="detail-field"><div class="detail-field-label">Équipement</div><div class="detail-field-value">${t.equip}</div></div>
+    <div class="detail-field" style="grid-column:1/-1"><div class="detail-field-label">Date création</div><div class="detail-field-value" style="font-family:var(--mono)">${t.date}</div></div>`;
+  document.getElementById('detail-tl').innerHTML = `
+    <div class="tl-item"><div class="tl-dot" style="background:var(--accent)22;border-color:var(--accent)"><span style="font-size:.5rem">●</span></div>
+      <div class="tl-time">${t.date}</div><div class="tl-text">Ticket <strong>créé</strong> par ${t.dem}</div></div>
+    <div class="tl-item"><div class="tl-dot" style="background:rgba(245,158,11,.2);border-color:var(--orange)"><span style="font-size:.5rem">●</span></div>
+      <div class="tl-time">+5 min</div><div class="tl-text">Assigné à <strong>${t.tech}</strong> (${t.level})</div></div>
+    ${t.status !== 'Nouveau' ? `<div class="tl-item"><div class="tl-dot" style="background:rgba(139,92,246,.2);border-color:#8b5cf6"><span style="font-size:.5rem">●</span></div>
+      <div class="tl-time">+15 min</div><div class="tl-text">Intervention <strong>démarrée</strong></div></div>` : ''}
+    ${t.status === 'Escaladé' ? `<div class="tl-item"><div class="tl-dot" style="background:rgba(239,68,68,.2);border-color:var(--red)"><span style="font-size:.5rem">●</span></div>
+      <div class="tl-time">+1h 30m</div><div class="tl-text">Ticket <strong>escaladé</strong> au niveau supérieur</div></div>` : ''}
+    ${t.status === 'Résolu' || t.status === 'Clôturé' ? `<div class="tl-item"><div class="tl-dot" style="background:rgba(16,185,129,.2);border-color:var(--green)"><span style="font-size:.5rem">●</span></div>
+      <div class="tl-time">+3h</div><div class="tl-text">Ticket <strong>résolu</strong> et clôturé</div></div>` : ''}`;
+  document.getElementById('detail-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="resolveTicket('${t.id}')">✅ Marquer résolu</button>
+    <button class="btn btn-secondary btn-sm" onclick="escalate('${t.id}')">⬆ Escalader</button>
+    <button class="btn btn-secondary btn-sm" onclick="toast('📋 Rapport ouvert','blue')">📋 Rapport</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteTicket('${t.id}');closeDetail()">🗑 Supprimer</button>`;
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('panel-overlay').style.display = 'block';
+}
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('panel-overlay').style.display = 'none';
+}
+function addComment() {
+  const v = document.getElementById('comment-input').value.trim();
+  if (!v) return;
+  toast('💬 Commentaire ajouté', 'green');
+  document.getElementById('comment-input').value = '';
+}
+
+// ─── TICKET ACTIONS ──────────────────────────────────────────────────────────
+function filterTickets(q) {
+  const fl = tickets.filter(t => t.title.toLowerCase().includes(q.toLowerCase()) || t.id.toLowerCase().includes(q.toLowerCase()) || t.dem.toLowerCase().includes(q.toLowerCase()));
+  renderTicketsTable(fl);
+}
+function filterByStatus(s) {
+  renderTicketsTable(s ? tickets.filter(t => t.status === s) : tickets);
+}
+function filterByPrio(p) {
+  renderTicketsTable(p ? tickets.filter(t => t.prio === p) : tickets);
+}
+function filterByLevel(l) {
+  renderTicketsTable(l ? tickets.filter(t => t.level === l) : tickets);
+}
+function createTicket() {
+  const title = document.getElementById('nt-title').value.trim();
+  if (!title) { toast('❌ Le titre est requis', 'red'); return; }
+  const id = `TKT-00${tickets.length+1}`;
+  tickets.unshift({ id, title, dem: document.getElementById('nt-dem').value, tech:'Ahmed Samir', level: document.getElementById('nt-level').value, status:'Nouveau', prio: document.getElementById('nt-prio').value, cat: document.getElementById('nt-cat').value, date: new Date().toLocaleString('fr-FR').slice(0,16), desc: document.getElementById('nt-desc').value || 'Pas de description.', equip: document.getElementById('nt-equip').value || 'N/A' });
+  renderTicketsTable(tickets);
+  renderRecentTickets();
+  renderInterventions();
+  closeModal('modal-new-ticket');
+  document.getElementById('nt-title').value = '';
+  document.getElementById('nt-desc').value = '';
+  toast(`🎫 Ticket ${id} créé avec succès !`, 'green');
+}
+function resolveTicket(id) {
+  const t = tickets.find(x=>x.id===id);
+  if(t){ t.status='Résolu'; renderTicketsTable(tickets); renderRecentTickets(); renderInterventions(); toast(`✅ Ticket ${id} marqué comme résolu`, 'green'); }
+}
+function escalate(id) {
+  const t = tickets.find(x=>x.id===id);
+  if(t) {
+    const next = { N1:'N2', N2:'N3', N3:'N3' };
+    const techs = { N2:'Mohamed Tazi', N3:'Younes Alaoui' };
+    if(t.level==='N3'){ toast('⚠️ Ce ticket est déjà au niveau N3', 'orange'); return; }
+    t.level = next[t.level]; t.tech = techs[t.level]||t.tech; t.status='Escaladé';
+    renderTicketsTable(tickets); renderRecentTickets(); renderInterventions();
+    toast(`⬆ Ticket ${id} escaladé vers ${t.level}`, 'orange');
+  }
+}
+function deleteTicket(id) {
+  tickets = tickets.filter(x=>x.id!==id);
+  renderTicketsTable(tickets); renderRecentTickets(); renderInterventions();
+  toast(`🗑 Ticket ${id} supprimé`, 'red');
+}
+function createUser() {
+  const fn = document.getElementById('nu-fname').value.trim();
+  const ln = document.getElementById('nu-lname').value.trim();
+  if(!fn||!ln){ toast('❌ Prénom et nom requis', 'red'); return; }
+  const cols = ['#2563eb','#8b5cf6','#ef4444','#10b981','#f59e0b','#06b6d4'];
+  users.push({ name:`${fn} ${ln}`, email: document.getElementById('nu-email').value||`${fn.toLowerCase()}.${ln.toLowerCase()}@ocpgroup.ma`, role: document.getElementById('nu-role').value, dept: document.getElementById('nu-dept').value, tickets:0, resolved:0, color: cols[Math.floor(Math.random()*cols.length)] });
+  renderUsers(); closeModal('modal-new-user');
+  document.getElementById('nu-fname').value=''; document.getElementById('nu-lname').value=''; document.getElementById('nu-email').value='';
+  toast(`👤 Utilisateur ${fn} ${ln} ajouté !`, 'green');
+}
+function removeUser(email) {
+  users = users.filter(u=>u.email!==email); renderUsers();
+  toast('🗑 Utilisateur supprimé', 'red');
+}
+function createEquip() {
+  const name = document.getElementById('ne-name').value.trim();
+  if(!name){ toast('❌ Le nom est requis', 'red'); return; }
+  const iconMap = { Ordinateur:'🖥️', Serveur:'🖧', Imprimante:'🖨️', Switch:'🔌', Téléphone:'📱', Autre:'📦' };
+  const type = document.getElementById('ne-type').value;
+  equipment.push({ icon: iconMap[type]||'📦', name, model: document.getElementById('ne-model').value||type, serial: document.getElementById('ne-serial').value||`SN-NEW-${Date.now().toString().slice(-4)}`, loc: document.getElementById('ne-loc').value||'Non spécifié', status: document.getElementById('ne-status').value });
+  renderEquipment(); closeModal('modal-new-equip');
+  document.getElementById('ne-name').value=''; document.getElementById('ne-model').value=''; document.getElementById('ne-serial').value=''; document.getElementById('ne-loc').value='';
+  toast('🖥️ Équipement ajouté avec succès !', 'green');
+}
+function globalSearch(q) {
+  if(q.length < 2) return;
+  const res = tickets.filter(t => t.title.toLowerCase().includes(q.toLowerCase()) || t.id.toLowerCase().includes(q.toLowerCase()));
+  if(res.length) { showPage('tickets', document.querySelectorAll('.nav-item')[1]); filterTickets(q); }
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function toast(msg, type='blue') {
+  const colors = { green: 'var(--green)', blue: 'var(--accent2)', red: 'var(--red)', orange: 'var(--orange)' };
+  const el = document.createElement('div');
+  el.className = 'toast-item';
+  el.style.borderLeft = `3px solid ${colors[type]||colors.blue}`;
+  el.innerHTML = `<span>${msg}</span>`;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(24px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(), 300); }, 3500);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+renderTicketsTable(tickets);
+renderRecentTickets();
+renderWeekChart();
+renderTechPerf();
+renderActivity();
+renderUsers();
+renderEquipment();
+renderInterventions();
+renderNotifications();
+renderPlanning();
+renderSettings();
+</script>
+</body>
+</html>

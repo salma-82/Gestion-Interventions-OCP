@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-InterventionApplication<intervention>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.ocp.intervention.InterventionApplication",
+            "projectName": "intervention",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
