@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 import './Login.css';
 
 const Login = () => {
@@ -10,6 +11,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,28 +31,25 @@ const Login = () => {
         password: password
       });
 
-      const userData = response.data; // Structure: { token, role, userId }
+      const userData = response.data; // Structure: { token, role, userId, name }
       
-      // Stockage propre dans le LocalStorage
-      localStorage.setItem('token', userData.token);
-      localStorage.setItem('role', userData.role);
-      localStorage.setItem('userId', userData.userId);
+      // Stockage propre dans le LocalStorage via AuthContext
+      login(userData.token, userData.role, userData.userId, userData.name || 'Technicien N1');
 
       // ✅ Routage intelligent et complet pour tous les rôles du système
-   // Copy had l-partie d les ifs f l-Login.jsx dyalk (f l-blassa d l-redirection)
-if (userData.role === 'ROLE_ADMIN' || userData.role === 'ADMIN') {
-  navigate('/admin-dashboard', { replace: true }); // ✅ Match m3a App.jsx
-} else if (userData.role === 'ROLE_DEMANDEUR' || userData.role === 'DEMANDEUR') {
-  navigate('/demandeur-dashboard', { replace: true }); // ✅ Match m3a App.jsx
-} else if (userData.role === 'ROLE_N1' || userData.role === 'N1') {
-  navigate('/tech-n1-dashboard', { replace: true }); // ✅ Match m3a App.jsx
-} else if (userData.role === 'ROLE_N2' || userData.role === 'N2') {
-  alert("Interface N2 non configurée");
-} else if (userData.role === 'ROLE_N3' || userData.role === 'N3') {
-  alert("Interface N3 non configurée");
-} else {
-  setError("Rôle inconnu.");
-}
+      if (userData.role === 'ROLE_ADMIN' || userData.role === 'ADMIN') {
+        navigate('/admin-dashboard', { replace: true });
+      } else if (userData.role === 'ROLE_DEMANDEUR' || userData.role === 'DEMANDEUR') {
+        navigate('/demandeur-dashboard', { replace: true });
+      } else if (userData.role === 'ROLE_N1' || userData.role === 'N1') {
+        navigate('/tech-n1-dashboard', { replace: true });
+      } else if (userData.role === 'ROLE_N2' || userData.role === 'N2') {
+        alert("Interface N2 non configurée");
+      } else if (userData.role === 'ROLE_N3' || userData.role === 'N3') {
+        alert("Interface N3 non configurée");
+      } else {
+        setError("Rôle inconnu.");
+      }
 
     } catch (err) {
       if (err.response && err.response.data && err.response.data.message) {
