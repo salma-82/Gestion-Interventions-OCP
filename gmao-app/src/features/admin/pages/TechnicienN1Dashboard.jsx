@@ -48,11 +48,10 @@ import {
   getMyInterventions,
   getMyHistory,
   startInterventionN1,
-  addRemoteActionN1,
   terminateInterventionN1,
-  escalateToN2N1
+  escalateToN2N1,
+  saveInterventionActions
 } from '../../../services/api';
-import axios from 'axios';
 
 // Subcomponents — ⚠️ LOGIQUE MÉTIER INTACTE
 import TicketCard from '../../../components/TicketCard';
@@ -123,46 +122,32 @@ export default function TechnicienN1Dashboard() {
 
   const handleSubmitClose = async (interventionId, data) => {
     try {
-      await addRemoteActionN1(interventionId, data.actionADistance);
-      await axios.put(
-        `http://localhost:8080/api/technicien/interventions/${interventionId}/actions`,
-        {
-          actionADistance: data.actionADistance,
-          surSiteEffectue: data.surSiteEffectue,
-          manipulationLourdeEffectue: data.manipulationLourdeEffectue
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Actions + Rapport already saved by ReportModal before calling this handler
+      // Just close the ticket with the full rapport data
       await terminateInterventionN1(interventionId, data.commentaire);
+
       toast.success(`Intervention #${interventionId} clôturée et validée !`, { duration: 4000, icon: '🎉' });
       await loadDashboardData();
       await fetchNotifications();
     } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de la clôture de l'intervention");
+      console.error('Close error:', error);
+      toast.error("Erreur lors de la clôture: " + (error.response?.data?.message || error.message));
       throw error;
     }
   };
 
   const handleSubmitEscalate = async (interventionId, data) => {
     try {
-      await addRemoteActionN1(interventionId, data.actionADistance);
-      await axios.put(
-        `http://localhost:8080/api/technicien/interventions/${interventionId}/actions`,
-        {
-          actionADistance: data.actionADistance,
-          surSiteEffectue: data.surSiteEffectue,
-          manipulationLourdeEffectue: data.manipulationLourdeEffectue
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Actions + Rapport already saved by ReportModal before calling this handler
+      // Just escalate to N2
       await escalateToN2N1(interventionId, data.commentaire);
+
       toast.success(`Intervention #${interventionId} escaladée au Support N2 !`, { duration: 4000, icon: '📤' });
       await loadDashboardData();
       await fetchNotifications();
     } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de l'escalade de l'intervention");
+      console.error('Escalade error:', error);
+      toast.error("Erreur lors de l'escalade: " + (error.response?.data?.message || error.message));
       throw error;
     }
   };
@@ -237,13 +222,13 @@ export default function TechnicienN1Dashboard() {
 
   const getStatusBadge = (statut) => {
     const s = String(statut).toUpperCase();
-    if (s === 'EN_ATTENTE')
+    if (s === 'EN_ATTENTE' || s === 'PENDING' || s === 'OUVERT')
       return <span className="t1d-status t1d-status-pending"><span className="t1d-status-dot" />En attente</span>;
-    if (s === 'EN_COURS')
-      return <span className="t1d-status t1d-status-active"><span className="t1d-status-dot" />En cours</span>;
-    if (s === 'CLOTURE')
+    if (s === 'EN_COURS' || s === 'EN_COURS_N1' || s === 'IN_PROGRESS_N1')
+      return <span className="t1d-status t1d-status-active"><span className="t1d-status-dot" />En cours N1</span>;
+    if (s === 'CLOTURE' || s === 'CLOSED')
       return <span className="t1d-status t1d-status-closed"><span className="t1d-status-dot" />Clôturé</span>;
-    if (s === 'ESCALADE_N2')
+    if (s === 'ESCALADE_N2' || s === 'ESCALATED_N2')
       return <span className="t1d-status t1d-status-escalated"><span className="t1d-status-dot" />Escaladé N2</span>;
     return <span className="t1d-status t1d-status-pending"><span className="t1d-status-dot" />{statut}</span>;
   };

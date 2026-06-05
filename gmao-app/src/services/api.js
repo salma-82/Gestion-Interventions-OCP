@@ -120,6 +120,11 @@ export const startInterventionN1 = async (ticketId, technicienId) => {
   return response.data;
 };
 
+export const saveInterventionActions = async (interventionId, actionData) => {
+  const response = await api.put(`/technicien/interventions/${interventionId}/actions`, actionData);
+  return response.data;
+};
+
 export const addRemoteActionN1 = async (interventionId, actionADistance) => {
   const response = await api.put(`/technicien/interventions/${interventionId}/actions`, {
     actionADistance,
@@ -156,14 +161,26 @@ export const getEscalatedN2Tickets = async () => {
   return response.data;
 };
 
-export const startInterventionN2 = async (ticketId) => {
-  // Même endpoint que N1, mais le backend détermine le rôle
-  const response = await api.post('/technicien/interventions/start', { ticketId });
+export const startInterventionN2 = async (ticketId, technicienId) => {
+  const response = await api.post('/technicien/interventions/start', {
+    ticketId,
+    technicienId,
+    statut: 'ESCALADE_N2'
+  });
   return response.data;
 };
 
-export const escalateToN3 = async (interventionId, reason) => {
-  const response = await api.post(`/technicien/interventions/${interventionId}/escalader`, { reason, targetLevel: 'N3' });
+export const escalateToN3 = async (interventionId, rapport) => {
+  const response = await api.post(`/technicien/interventions/${interventionId}/escalader`, {
+    rapport,
+    prochainStatut: 'ESCALADE_N3',
+    groupeCible: 'ROLE_N3'
+  });
+  return response.data;
+};
+
+export const getTicketInterventions = async (ticketId) => {
+  const response = await api.get(`/technicien/tickets/${ticketId}/interventions`);
   return response.data;
 };
 
@@ -173,8 +190,34 @@ export const getEscalatedN3Tickets = async () => {
   return response.data;
 };
 
+export const startInterventionN3 = async (ticketId, technicienId) => {
+  const response = await api.post('/n3/interventions/start', {
+    ticketId,
+    technicienId
+  });
+  return response.data;
+};
+
+export const getAvailableEquipments = async () => {
+  const response = await api.get('/equipements/available');
+  return response.data;
+};
+
+export const replaceEquipment = async (ticketId, newEquipmentId, technicienId) => {
+  const response = await api.put(`/tickets/${ticketId}/replace-equipment`, {
+    newEquipmentId,
+    technicienId
+  });
+  return response.data;
+};
+
+export const closeTicketN3 = async (interventionId, reportDto) => {
+  const response = await api.post(`/n3/interventions/${interventionId}/close`, reportDto);
+  return response.data;
+};
+
 export const updateEquipmentStatus = async (equipmentId, status) => {
-  const response = await api.put(`/equipements/${equipmentId}/status`, { status });
+  const response = await api.put(`/technicien/equipements/${equipmentId}/status`, { status });
   return response.data;
 };
 

@@ -1251,3 +1251,175 @@ body {
 /* ==================== PAGE MON PROFIL - STYLE PROFESSIONNEL ==================== */
 
 /* Layout principal */
+
+/* ==================== TABLEAU DES EQUIPEMENTS ==================== */
+.equipments-table-wrapper {
+  background: var(--ocp-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow-x: auto;
+  border: 1px solid rgba(0, 102, 51, 0.1);
+  margin-top: var(--spacing-md);
+}
+
+.equipments-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.equipments-table th {
+  background-color: var(--ocp-gray-light);
+  color: var(--ocp-green-dark);
+  font-weight: 600;
+  padding: var(--spacing-md);
+  border-bottom: 2px solid rgba(0, 102, 51, 0.15);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.equipments-table td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--ocp-gray-light);
+  color: var(--ocp-black);
+  vertical-align: middle;
+}
+
+.equipments-table tr:hover {
+  background-color: var(--ocp-green-ultra-light);
+}
+
+.equipments-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Badges de statut */
+.badge-status-equip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-status-equip.actif {
+  background-color: #e6f7ed;
+  color: #1a7f37;
+  border: 1px solid #a2e9b9;
+}
+
+.badge-status-equip.en_panne {
+  background-color: #ffebe9;
+  color: #cf222e;
+  border: 1px solid #ffd8d6;
+}
+
+.badge-status-equip.en_maintenance {
+  background-color: #fff8c5;
+  color: #9a6700;
+  border: 1px solid #fff1a7;
+}
+
+.badge-status-equip.hors_service {
+  background-color: #f6f8fa;
+  color: #57606a;
+  border: 1px solid #d0d7de;
+}
+
+/* Badges d'état d'affectation */
+.badge-affect-equip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-affect-equip.disponible {
+  background-color: #ddf4ff;
+  color: #0969da;
+  border: 1px solid #b3e3ff;
+}
+
+.badge-affect-equip.en_utilisation {
+  background-color: #fbefff;
+  color: #8250df;
+  border: 1px solid #ecc6ff;
+}
+
+/* Actions */
+.action-buttons-cell {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.btn-icon-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.btn-icon-action.view {
+  color: var(--info);
+}
+
+.btn-icon-action.view:hover {
+  background-color: rgba(23, 162, 184, 0.1);
+}
+
+.btn-icon-action.edit {
+  color: var(--ocp-green);
+}
+
+.btn-icon-action.edit:hover {
+  background-color: var(--ocp-green-ultra-light);
+}
+
+.btn-icon-action.delete {
+  color: var(--danger);
+}
+
+.btn-icon-action.delete:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Modal Voir Equipement */
+.equipement-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.equipement-detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e1e4e6;
+}
+
+.equipement-detail-item:last-child {
+  border-bottom: none;
+}
+
+.equipement-detail-label {
+  font-weight: 600;
+  color: var(--ocp-gray);
+}
+
+.equipement-detail-value {
+  color: var(--ocp-black);
+  font-weight: 500;
+}

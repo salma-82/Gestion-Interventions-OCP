@@ -206,7 +206,7 @@ function DashboardNew({ stats, users, equipments, loading }) {
   const totalUsers = users?.length || 12;
   const activeUsers = users?.filter(u => u.status === true).length || 10;
   const totalEquipments = equipments?.length || 8;
-  const availableEquipments = equipments?.filter(e => e.disponible === true).length || 6;
+  const availableEquipments = equipments?.filter(e => e.statut === 'ACTIF' && e.etatAffectation === 'DISPONIBLE').length || 6;
 
   const cards = [
     { title: 'Utilisateurs', value: totalUsers, icon: <Users size={24} />, sub: `${activeUsers} actifs`, color: '#4361ee' },
@@ -452,10 +452,15 @@ function UserModalNew({ user, onClose, onSave }) {
 // ==================== ÉQUIPEMENTS ====================
 function EquipmentsNew({ equipments, loading, onRefresh, onDelete }) {
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState(null);
+  const [viewingEquipment, setViewingEquipment] = useState(null);
   const [search, setSearch] = useState('');
 
-  const filtered = equipments.filter(e => e.nom?.toLowerCase().includes(search.toLowerCase()) || e.reference?.toLowerCase().includes(search.toLowerCase()));
+  const filtered = equipments.filter(e => 
+    e.nom?.toLowerCase().includes(search.toLowerCase()) || 
+    e.codeInventaire?.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleSave = async (data) => {
     try {
@@ -467,51 +472,388 @@ function EquipmentsNew({ equipments, loading, onRefresh, onDelete }) {
       await onRefresh();
       setShowModal(false);
       setEditingEquipment(null);
-    } catch (err) { alert('Erreur'); }
+    } catch (err) { alert('Erreur lors de la sauvegarde'); }
   };
 
-  const getEtat = (etat) => {
-    const config = { 'BON': 'success', 'MOYEN': 'warning', 'HS': 'danger' };
-    return <span className={`etat-${config[etat] || 'default'}`}>{etat}</span>;
+  const getStatutLabel = (statut) => {
+    const labels = {
+      'ACTIF': 'Actif',
+      'EN_PANNE': 'En panne',
+      'EN_MAINTENANCE': 'En maintenance',
+      'HORS_SERVICE': 'Hors service'
+    };
+    return labels[statut] || statut;
+  };
+
+  const getAffectationLabel = (etat) => {
+    const labels = {
+      'DISPONIBLE': 'Disponible',
+      'EN_UTILISATION': 'En cours d\'utilisation'
+    };
+    return labels[etat] || etat;
+  };
+
+  const getStatutClass = (statut) => {
+    return `badge-status-equip ${statut?.toLowerCase() || ''}`;
+  };
+
+  const getAffectationClass = (etat) => {
+    return `badge-affect-equip ${etat?.toLowerCase() || ''}`;
   };
 
   return (
     <div className="section-new">
-      <div className="section-header"><h2>Gestion des équipements</h2><button className="btn-primary" onClick={() => { setEditingEquipment(null); setShowModal(true); }}><Plus size={18} /> Nouvel équipement</button></div>
-      <div className="filters-row"><div className="search-box"><Search size={18} /><input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} /></div></div>
-      {loading ? <div className="loading-state">Chargement...</div> : <div className="equipments-grid">{filtered.map(eq => (<div key={eq.id} className="equipment-card"><div className="equipment-header"><div className="equipment-icon"><Wrench size={28} /></div><div className="equipment-actions"><button onClick={() => { setEditingEquipment(eq); setShowModal(true); }}><Edit2 size={16} /></button><button onClick={() => onDelete(eq.id)}><Trash2 size={16} /></button></div></div><h4>{eq.nom}</h4><p className="equipment-ref">Réf: {eq.reference}</p><p className="equipment-desc">{eq.description?.substring(0, 60)}...</p><div className="equipment-footer">{getEtat(eq.etat)}<span className={`available-${eq.disponible ? 'yes' : 'no'}`}>{eq.disponible ? 'Disponible' : 'Indisponible'}</span></div>{eq.localisation && <div className="equipment-location"><MapPin size={12} /> {eq.localisation}</div>}</div>))}</div>}
-      {showModal && <EquipmentModalNew equipment={editingEquipment} onClose={() => { setShowModal(false); setEditingEquipment(null); }} onSave={handleSave} />}
+      <div className="section-header">
+        <h2>Gestion des équipements</h2>
+        <button className="btn-primary" onClick={() => { setEditingEquipment(null); setShowModal(true); }}>
+          <Plus size={18} /> Nouvel équipement
+        </button>
+      </div>
+      
+      <div className="filters-row">
+        <div className="search-box">
+          <Search size={18} />
+          <input 
+            type="text" 
+            placeholder="Rechercher par nom ou code inventaire..." 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="loading-state">Chargement...</div>
+      ) : (
+        <div className="equipments-table-wrapper">
+          <table className="equipments-table">
+            <thead>
+              <tr>
+                <th>Code Inventaire</th>
+                <th>Nom</th>
+                <th>Type</th>
+                <th>Marque</th>
+                <th>Modèle</th>
+                <th>Localisation</th>
+                <th>Statut</th>
+                <th>Affectation</th>
+                <th style={{ textAlign: 'center' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan="9" style={{ textAlign: 'center', padding: '30px', color: 'var(--ocp-gray)' }}>
+                    Aucun équipement trouvé
+                  </td>
+                </tr>
+              ) : (
+                filtered.map(eq => (
+                  <tr key={eq.id}>
+                    <td style={{ fontWeight: 600, color: 'var(--ocp-green)' }}>{eq.codeInventaire}</td>
+                    <td><strong>{eq.nom}</strong></td>
+                    <td>{eq.type}</td>
+                    <td>{eq.marque}</td>
+                    <td>{eq.modele}</td>
+                    <td>{eq.localisation || '—'}</td>
+                    <td>
+                      <span className={getStatutClass(eq.statut)}>
+                        {getStatutLabel(eq.statut)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={getAffectationClass(eq.etatAffectation)}>
+                        {getAffectationLabel(eq.etatAffectation)}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div className="action-buttons-cell" style={{ justifyContent: 'center' }}>
+                        <button 
+                          className="btn-icon-action view" 
+                          title="Visualiser"
+                          onClick={() => { setViewingEquipment(eq); setShowViewModal(true); }}
+                        >
+                          <Search size={16} />
+                        </button>
+                        <button 
+                          className="btn-icon-action edit" 
+                          title="Modifier"
+                          onClick={() => { setEditingEquipment(eq); setShowModal(true); }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          className="btn-icon-action delete" 
+                          title="Supprimer"
+                          onClick={() => onDelete(eq.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showModal && (
+        <EquipmentModalNew 
+          equipment={editingEquipment} 
+          onClose={() => { setShowModal(false); setEditingEquipment(null); }} 
+          onSave={handleSave} 
+        />
+      )}
+
+      {showViewModal && (
+        <EquipmentViewModal 
+          equipment={viewingEquipment} 
+          onClose={() => { setShowViewModal(false); setViewingEquipment(null); }} 
+        />
+      )}
     </div>
   );
 }
 
 function EquipmentModalNew({ equipment, onClose, onSave }) {
   const [form, setForm] = useState({
-    nom: equipment?.nom || '', reference: equipment?.reference || '',
-    description: equipment?.description || '', etat: equipment?.etat || 'BON',
-    disponible: equipment?.disponible !== undefined ? equipment.disponible : true,
-    localisation: equipment?.localisation || ''
+    codeInventaire: equipment?.codeInventaire || '',
+    nom: equipment?.nom || '',
+    type: equipment?.type || '',
+    marque: equipment?.marque || '',
+    modele: equipment?.modele || '',
+    numeroSerie: equipment?.numeroSerie || '',
+    localisation: equipment?.localisation || '',
+    statut: equipment?.statut || 'ACTIF',
+    etatAffectation: equipment?.etatAffectation || 'DISPONIBLE',
+    description: equipment?.description || ''
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.nom || !form.reference) return alert('Champs obligatoires');
+    if (!form.nom || !form.codeInventaire || !form.type || !form.marque || !form.modele || !form.numeroSerie) {
+      return alert('Veuillez remplir tous les champs obligatoires');
+    }
     await onSave(form);
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header"><h3>{equipment ? 'Modifier' : 'Nouvel'} équipement</h3><button onClick={onClose}><X size={20} /></button></div>
+        <div className="modal-header">
+          <h3>{equipment ? 'Modifier' : 'Nouvel'} équipement</h3>
+          <button onClick={onClose}><X size={20} /></button>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
-            <div className="form-row"><div className="form-group"><label>Nom *</label><input type="text" value={form.nom} onChange={e => setForm({...form, nom: e.target.value})} required /></div><div className="form-group"><label>Référence *</label><input type="text" value={form.reference} onChange={e => setForm({...form, reference: e.target.value})} required /></div></div>
-            <div className="form-group"><label>Description</label><textarea rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
-            <div className="form-row"><div className="form-group"><label>État</label><select value={form.etat} onChange={e => setForm({...form, etat: e.target.value})}><option value="BON">Bon état</option><option value="MOYEN">État moyen</option><option value="HS">Hors service</option></select></div><div className="form-group"><label>Disponibilité</label><select value={form.disponible} onChange={e => setForm({...form, disponible: e.target.value === 'true'})}><option value="true">Disponible</option><option value="false">Indisponible</option></select></div></div>
-            <div className="form-group"><label>Localisation</label><input type="text" value={form.localisation} onChange={e => setForm({...form, localisation: e.target.value})} placeholder="Atelier, Zone..." /></div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Code Inventaire *</label>
+                <input 
+                  type="text" 
+                  value={form.codeInventaire} 
+                  onChange={e => setForm({...form, codeInventaire: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>Nom de l'équipement *</label>
+                <input 
+                  type="text" 
+                  value={form.nom} 
+                  onChange={e => setForm({...form, nom: e.target.value})} 
+                  required 
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label>Type *</label>
+                <input 
+                  type="text" 
+                  value={form.type} 
+                  onChange={e => setForm({...form, type: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>Marque *</label>
+                <input 
+                  type="text" 
+                  value={form.marque} 
+                  onChange={e => setForm({...form, marque: e.target.value})} 
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Modèle *</label>
+                <input 
+                  type="text" 
+                  value={form.modele} 
+                  onChange={e => setForm({...form, modele: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>Numéro de Série *</label>
+                <input 
+                  type="text" 
+                  value={form.numeroSerie} 
+                  onChange={e => setForm({...form, numeroSerie: e.target.value})} 
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Localisation</label>
+                <input 
+                  type="text" 
+                  value={form.localisation} 
+                  onChange={e => setForm({...form, localisation: e.target.value})} 
+                  placeholder="Ex: Atelier, Bureau 10..." 
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Statut</label>
+                <select 
+                  value={form.statut} 
+                  onChange={e => setForm({...form, statut: e.target.value})}
+                >
+                  <option value="ACTIF">Actif</option>
+                  <option value="EN_PANNE">En panne</option>
+                  <option value="EN_MAINTENANCE">En maintenance</option>
+                  <option value="HORS_SERVICE">Hors service</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>État d'affectation</label>
+                <select 
+                  value={form.etatAffectation} 
+                  onChange={e => setForm({...form, etatAffectation: e.target.value})}
+                >
+                  <option value="DISPONIBLE">Disponible</option>
+                  <option value="EN_UTILISATION">En utilisation</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Description</label>
+              <textarea 
+                rows={3} 
+                value={form.description} 
+                onChange={e => setForm({...form, description: e.target.value})} 
+              />
+            </div>
           </div>
-          <div className="modal-footer"><button type="button" onClick={onClose} className="btn-secondary">Annuler</button><button type="submit" className="btn-primary"><Save size={18} /> Enregistrer</button></div>
+          <div className="modal-footer">
+            <button type="button" onClick={onClose} className="btn-secondary">Annuler</button>
+            <button type="submit" className="btn-primary"><Save size={18} /> Enregistrer</button>
+          </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function EquipmentViewModal({ equipment, onClose }) {
+  if (!equipment) return null;
+
+  const getStatutLabel = (statut) => {
+    const labels = {
+      'ACTIF': 'Actif',
+      'EN_PANNE': 'En panne',
+      'EN_MAINTENANCE': 'En maintenance',
+      'HORS_SERVICE': 'Hors service'
+    };
+    return labels[statut] || statut;
+  };
+
+  const getAffectationLabel = (etat) => {
+    const labels = {
+      'DISPONIBLE': 'Disponible',
+      'EN_UTILISATION': 'En cours d\'utilisation'
+    };
+    return labels[etat] || etat;
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Détails de l'équipement</h3>
+          <button onClick={onClose}><X size={20} /></button>
+        </div>
+        <div className="modal-body">
+          <div className="equipement-details-list">
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Code Inventaire</span>
+              <span className="equipement-detail-value" style={{ fontWeight: 600, color: 'var(--ocp-green)' }}>
+                {equipment.codeInventaire}
+              </span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Nom</span>
+              <span className="equipement-detail-value">{equipment.nom}</span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Type</span>
+              <span className="equipement-detail-value">{equipment.type}</span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Marque</span>
+              <span className="equipement-detail-value">{equipment.marque}</span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Modèle</span>
+              <span className="equipement-detail-value">{equipment.modele}</span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Numéro de Série</span>
+              <span className="equipement-detail-value">{equipment.numeroSerie}</span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Localisation</span>
+              <span className="equipement-detail-value">{equipment.localisation || 'Non spécifiée'}</span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">Statut</span>
+              <span className="equipement-detail-value">
+                <span className={`badge-status-equip ${equipment.statut?.toLowerCase() || ''}`}>
+                  {getStatutLabel(equipment.statut)}
+                </span>
+              </span>
+            </div>
+            <div className="equipement-detail-item">
+              <span className="equipement-detail-label">État d'affectation</span>
+              <span className="equipement-detail-value">
+                <span className={`badge-affect-equip ${equipment.etatAffectation?.toLowerCase() || ''}`}>
+                  {getAffectationLabel(equipment.etatAffectation)}
+                </span>
+              </span>
+            </div>
+            <div className="equipement-detail-item" style={{ flexDirection: 'column', alignItems: 'flex-start', borderBottom: 'none' }}>
+              <span className="equipement-detail-label" style={{ marginBottom: 6 }}>Description</span>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: '#4b5563', whiteSpace: 'pre-line', background: '#f9fafb', padding: '10px', borderRadius: '6px', width: '100%', border: '1px solid #e5e7eb' }}>
+                {equipment.description || 'Aucune description'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button type="button" onClick={onClose} className="btn-primary">Fermer</button>
+        </div>
       </div>
     </div>
   );
@@ -545,7 +887,7 @@ function PreventiveNew({ equipments, onRefresh }) {
         <div className="preventive-header"><h2><Calendar size={24} /> Maintenance préventive</h2><p>Planifiez des interventions programmées sur vos équipements</p></div>
         <form onSubmit={handleSubmit}>
           <div className="form-group"><label>Titre de l'intervention *</label><input type="text" placeholder="Ex: Maintenance trimestrielle" value={form.titre} onChange={e => setForm({...form, titre: e.target.value})} required /></div>
-          <div className="form-row"><div className="form-group"><label>Équipement *</label><select value={form.equipementId} onChange={e => setForm({...form, equipementId: e.target.value})} required><option value="">Sélectionner</option>{equipments.map(e => <option key={e.id} value={e.id}>{e.nom} - {e.reference}</option>)}</select></div><div className="form-group"><label>Priorité</label><select value={form.priorite} onChange={e => setForm({...form, priorite: e.target.value})}><option value="LOW">Basse</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option></select></div></div>
+          <div className="form-row"><div className="form-group"><label>Équipement *</label><select value={form.equipementId} onChange={e => setForm({...form, equipementId: e.target.value})} required><option value="">Sélectionner</option>{equipments.map(e => <option key={e.id} value={e.id}>{e.nom} - {e.codeInventaire}</option>)}</select></div><div className="form-group"><label>Priorité</label><select value={form.priorite} onChange={e => setForm({...form, priorite: e.target.value})}><option value="LOW">Basse</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option></select></div></div>
           <div className="form-group"><label>Description *</label><textarea rows={4} placeholder="Détails de l'intervention..." value={form.description} onChange={e => setForm({...form, description: e.target.value})} required /></div>
           <button type="submit" disabled={loading} className="btn-primary">{loading ? 'Planification...' : 'Planifier l\'intervention'}</button>
         </form>

@@ -1,193 +1,443 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, FileText, Settings, ShieldAlert, Cpu } from 'lucide-react';
+import {
+  X,
+  CheckCircle,
+  AlertTriangle,
+  FileText,
+  Cpu,
+  User,
+  Calendar,
+  Hash,
+  MapPin,
+  Wrench,
+  Radio,
+  Package,
+  MessageSquare,
+  ChevronRight,
+  ShieldAlert,
+  Loader2,
+  Clock,
+  Stethoscope,
+  ClipboardList,
+  BadgeCheck,
+  Timer
+} from 'lucide-react';
 import toast from 'react-hot-toast';
+import './ReportModal.css';
 
-export default function ReportModal({ isOpen, onClose, onSubmitClose, onSubmitEscalate, intervention }) {
+// API for saving the rapport
+import api from '../services/api';
+
+export default function ReportModal({
+  isOpen,
+  onClose,
+  onSubmitClose,
+  onSubmitEscalate,
+  intervention
+}) {
+  // Action fields (saved via /actions endpoint)
   const [actionADistance, setActionADistance] = useState('');
   const [surSiteEffectue, setSurSiteEffectue] = useState(false);
   const [manipulationLourdeEffectue, setManipulationLourdeEffectue] = useState(false);
+
+  // Rapport fields (saved via /rapport endpoint — required for escalade!)
+  const [diagnostic, setDiagnostic] = useState('');
+  const [actionsRealisees, setActionsRealisees] = useState('');
+  const [resultat, setResultat] = useState('');
   const [commentaire, setCommentaire] = useState('');
+  const [tempsPasse, setTempsPasse] = useState('');
+
   const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'close' | 'escalate' | null
 
   useEffect(() => {
     if (isOpen && intervention) {
       setActionADistance(intervention.actionADistance || '');
       setSurSiteEffectue(intervention.surSiteEffectue || false);
       setManipulationLourdeEffectue(intervention.manipulationLourdeEffectue || false);
-      setCommentaire('');
+      setDiagnostic(intervention.diagnostic || '');
+      setActionsRealisees(intervention.actionsRealisees || '');
+      setResultat(intervention.resultat || '');
+      setCommentaire(intervention.commentaire || '');
+      setTempsPasse(intervention.tempsPasse || '');
     }
   }, [isOpen, intervention]);
 
   if (!isOpen || !intervention) return null;
 
   const ticket = intervention.ticket || {};
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+  const priorityConfig = {
+    HIGH: { label: 'Critique', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+    MEDIUM: { label: 'Moyenne', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+    LOW: { label: 'Normale', color: '#047857', bg: '#f0fdf4', border: '#bbf7d0' },
+  };
+  const pKey = String(ticket.priorite || 'LOW').toUpperCase();
+  const pConfig = priorityConfig[pKey] || priorityConfig.LOW;
+
+  // All 5 rapport fields are required for escalade
+  const isRapportComplete =
+    diagnostic.trim().length > 0 &&
+    actionsRealisees.trim().length > 0 &&
+    resultat.trim().length > 0 &&
+    commentaire.trim().length > 0 &&
+    tempsPasse.trim().length > 0;
+
+  // For close, commentaire alone is sufficient
+  const isCloseValid = commentaire.trim().length > 0;
 
   const handleAction = async (type) => {
-    if (!commentaire.trim()) {
-      toast.error('Veuillez remplir le commentaire technique obligatoire.');
+    if (type === 'escalate' && !isRapportComplete) {
+      toast.error('Tous les champs du rapport doivent être remplis pour escalader vers N2.', {
+        icon: '⚠️',
+        style: { fontWeight: 600 },
+        duration: 4000
+      });
+      return;
+    }
+
+    if (type === 'close' && !isCloseValid) {
+      toast.error('Le commentaire technique est obligatoire avant de clôturer.', {
+        icon: '⚠️',
+        style: { fontWeight: 600 }
+      });
       return;
     }
 
     setLoading(true);
+    setPendingAction(type);
     try {
+      // Step 1: Save the full rapport (diagnostic, actionsRealisees, resultat, commentaire, tempsPasse)
+      // This is required by the backend before escalade
+      await api.put(`/technicien/interventions/${intervention.id}/rapport`, {
+        diagnostic,
+        actionsRealisees,
+        resultat,
+        commentaire,
+        tempsPasse
+      });
+
+      // Step 2: Save action details (actionADistance, surSiteEffectue, manipulationLourdeEffectue)
+      await api.put(`/technicien/interventions/${intervention.id}/actions`, {
+        actionADistance,
+        surSiteEffectue,
+        manipulationLourdeEffectue
+      });
+
+      // Step 3: Execute the action (close or escalate)
       if (type === 'close') {
         await onSubmitClose(intervention.id, {
           actionADistance,
           surSiteEffectue,
           manipulationLourdeEffectue,
-          commentaire
+          commentaire,
+          diagnostic,
+          actionsRealisees,
+          resultat,
+          tempsPasse
         });
       } else if (type === 'escalate') {
         await onSubmitEscalate(intervention.id, {
           actionADistance,
           surSiteEffectue,
           manipulationLourdeEffectue,
-          commentaire
+          commentaire,
+          diagnostic,
+          actionsRealisees,
+          resultat,
+          tempsPasse
         });
       }
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error("Erreur lors de l'exécution du rapport.");
+      const errMsg = err.response?.data?.message || err.response?.data || err.message || "Erreur inconnue";
+      toast.error("Erreur: " + errMsg, { icon: '❌', duration: 5000 });
     } finally {
       setLoading(false);
+      setPendingAction(null);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"
-        onClick={onClose}
-      ></div>
+    <div className="rm2-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="rm2-modal">
 
-      {/* Modal Card */}
-      <div className="relative w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-fade-in my-6">
-        
-        {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-emerald-500" />
-            <h3 className="font-bold text-base">Rapport Technique Obligatoire</h3>
+        {/* ── HEADER ── */}
+        <div className="rm2-header">
+          <div className="rm2-header-left">
+            <div className="rm2-header-icon">
+              <FileText size={20} />
+            </div>
+            <div>
+              <h2 className="rm2-header-title">Rapport d'Intervention N1</h2>
+              <p className="rm2-header-sub">Support Technicien N1 — OCP Khouribga</p>
+            </div>
           </div>
-          <button 
-            onClick={onClose}
-            className="text-slate-400 hover:text-white rounded-full p-1 transition-all hover:bg-slate-800 focus:outline-none"
-          >
-            <X className="h-5 w-5" />
+          <button className="rm2-close-btn" onClick={onClose} disabled={loading}>
+            <X size={18} />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 max-h-[75vh] overflow-y-auto flex flex-col gap-5">
-          
-          {/* Info Card */}
-          <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100 flex flex-col gap-1 text-xs">
-            <span className="font-bold text-emerald-800 text-[10px] uppercase tracking-wider">Ticket en cours</span>
-            <h4 className="font-bold text-slate-850 text-sm mt-1">{ticket.titre}</h4>
-            <div className="flex items-center gap-1.5 text-slate-500 mt-2">
-              <Cpu className="h-3.5 w-3.5" />
-              <span>Équipement : {ticket.equipement?.nom || 'Inconnu'}</span>
-            </div>
-          </div>
+        {/* ── META STRIP ── */}
+        <div className="rm2-meta-strip">
+          <span className="rm2-meta-item">
+            <Hash size={12} /> Réf. #{intervention.id}
+          </span>
+          <span className="rm2-meta-sep">·</span>
+          <span className="rm2-meta-item">
+            <Calendar size={12} /> {dateStr}
+          </span>
+          <span className="rm2-meta-sep">·</span>
+          <span className="rm2-meta-item">
+            <Clock size={12} /> {timeStr}
+          </span>
+        </div>
 
-          {/* Form Fields */}
-          <div className="flex flex-col gap-4">
-            
-            {/* Action à distance */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-700">
-                Action à distance effectuée <span className="text-rose-500">*</span>
+        {/* ── BODY ── */}
+        <div className="rm2-body">
+
+          {/* ── SECTION 1 : Informations du ticket ── */}
+          <section className="rm2-section">
+            <div className="rm2-section-label">
+              <ChevronRight size={14} />
+              Informations du ticket
+            </div>
+
+            <div className="rm2-ticket-card">
+              <div className="rm2-ticket-card-header">
+                <div className="rm2-ticket-priority-dot" style={{ backgroundColor: pConfig.color }} />
+                <span className="rm2-ticket-ref">TICKET #{ticket.id}</span>
+                <span
+                  className="rm2-priority-badge"
+                  style={{ color: pConfig.color, background: pConfig.bg, border: `1px solid ${pConfig.border}` }}
+                >
+                  {pConfig.label}
+                </span>
+              </div>
+              <h3 className="rm2-ticket-title">{ticket.titre || '—'}</h3>
+              {ticket.description && (
+                <p className="rm2-ticket-desc">{ticket.description}</p>
+              )}
+              <div className="rm2-ticket-info-grid">
+                {ticket.equipement?.nom && (
+                  <div className="rm2-info-item">
+                    <Cpu size={13} className="rm2-info-icon" />
+                    <span>{ticket.equipement.nom}</span>
+                  </div>
+                )}
+                {ticket.demandeur?.nom && (
+                  <div className="rm2-info-item">
+                    <User size={13} className="rm2-info-icon" />
+                    <span>{ticket.demandeur.nom}</span>
+                  </div>
+                )}
+                {ticket.localisation && (
+                  <div className="rm2-info-item">
+                    <MapPin size={13} className="rm2-info-icon" />
+                    <span>{ticket.localisation}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* ── SECTION 2 : Actions réalisées ── */}
+          <section className="rm2-section">
+            <div className="rm2-section-label">
+              <ChevronRight size={14} />
+              Actions de support à distance
+            </div>
+
+            <div className="rm2-field">
+              <label className="rm2-label">
+                <Radio size={13} /> Action à distance effectuée
               </label>
               <input
                 type="text"
-                placeholder="Ex: Analyse de logs à distance, réinitialisation de port..."
+                className="rm2-input"
+                placeholder="Ex : Analyse des logs, réinitialisation du port, test de connectivité..."
                 value={actionADistance}
                 onChange={(e) => setActionADistance(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                required
               />
             </div>
 
-            {/* Checkbox options (styled toggles) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-              {/* Sur site */}
-              <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-150 hover:bg-slate-50/50 transition-colors cursor-pointer">
+            <div className="rm2-checkboxes-grid">
+              <label className={`rm2-checkbox-card ${surSiteEffectue ? 'checked' : ''}`}>
                 <input
                   type="checkbox"
                   checked={surSiteEffectue}
                   onChange={(e) => setSurSiteEffectue(e.target.checked)}
-                  className="rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 h-4.5 w-4.5"
+                  className="rm2-checkbox-input"
                 />
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-700">Intervention sur site</span>
-                  <span className="text-[10px] text-slate-400">Présence sur le terrain</span>
+                <div className="rm2-checkbox-icon-wrap" style={{ background: surSiteEffectue ? '#f0fdf4' : '#f8fafc', color: surSiteEffectue ? '#047857' : '#94a3b8' }}>
+                  <MapPin size={18} />
                 </div>
+                <div>
+                  <p className="rm2-checkbox-title">Intervention sur site</p>
+                  <p className="rm2-checkbox-sub">Déplacement physique sur le terrain</p>
+                </div>
+                {surSiteEffectue && <CheckCircle size={16} className="rm2-checkbox-check" />}
               </label>
 
-              {/* Manipulation lourde */}
-              <label className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-150 hover:bg-slate-50/50 transition-colors cursor-pointer">
+              <label className={`rm2-checkbox-card ${manipulationLourdeEffectue ? 'checked' : ''}`}>
                 <input
                   type="checkbox"
                   checked={manipulationLourdeEffectue}
                   onChange={(e) => setManipulationLourdeEffectue(e.target.checked)}
-                  className="rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 h-4.5 w-4.5"
+                  className="rm2-checkbox-input"
                 />
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-700">Matériel lourd</span>
-                  <span className="text-[10px] text-slate-400">Levage, outillage lourd</span>
+                <div className="rm2-checkbox-icon-wrap" style={{ background: manipulationLourdeEffectue ? '#fffbeb' : '#f8fafc', color: manipulationLourdeEffectue ? '#d97706' : '#94a3b8' }}>
+                  <Package size={18} />
                 </div>
+                <div>
+                  <p className="rm2-checkbox-title">Matériel lourd</p>
+                  <p className="rm2-checkbox-sub">Outillage lourd / levage utilisé</p>
+                </div>
+                {manipulationLourdeEffectue && <CheckCircle size={16} className="rm2-checkbox-check" />}
               </label>
             </div>
+          </section>
 
-            {/* Commentaire technique obligatoire */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-700">
-                Commentaire technique final / Motif <span className="text-rose-500">*</span>
+          {/* ── SECTION 3 : Rapport technique complet (obligatoire pour escalade) ── */}
+          <section className="rm2-section">
+            <div className="rm2-section-label">
+              <ChevronRight size={14} />
+              Rapport technique
+              <span className="rm2-section-hint">— Obligatoire pour escalader</span>
+            </div>
+
+            <div className="rm2-field">
+              <label className="rm2-label">
+                <Stethoscope size={13} /> Diagnostic
+                <span className="rm2-required">*</span>
               </label>
               <textarea
-                placeholder="Décrivez en détail la résolution finale ou le motif d'escalade..."
-                value={commentaire}
-                onChange={(e) => setCommentaire(e.target.value)}
-                rows={4}
-                className="w-full text-xs p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
-                required
-              ></textarea>
+                className="rm2-textarea rm2-textarea-sm"
+                placeholder="Décrivez le diagnostic posé sur l'incident (ex: Panne réseau au switch principal)..."
+                value={diagnostic}
+                onChange={(e) => setDiagnostic(e.target.value)}
+                rows={2}
+              />
             </div>
 
-          </div>
+            <div className="rm2-field">
+              <label className="rm2-label">
+                <ClipboardList size={13} /> Actions réalisées
+                <span className="rm2-required">*</span>
+              </label>
+              <textarea
+                className="rm2-textarea rm2-textarea-sm"
+                placeholder="Listez les actions effectuées (ex: Redémarrage du service, vérification câblage)..."
+                value={actionsRealisees}
+                onChange={(e) => setActionsRealisees(e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className="rm2-field">
+              <label className="rm2-label">
+                <BadgeCheck size={13} /> Résultat (Problème résolu ?)
+                <span className="rm2-required">*</span>
+              </label>
+              <input
+                type="text"
+                className="rm2-input"
+                placeholder="Ex: Problème non résolu — nécessite intervention sur site N2"
+                value={resultat}
+                onChange={(e) => setResultat(e.target.value)}
+              />
+            </div>
+
+            <div className="rm2-fields-row">
+              <div className="rm2-field rm2-field-grow">
+                <label className="rm2-label">
+                  <MessageSquare size={13} /> Commentaire technique
+                  <span className="rm2-required">*</span>
+                </label>
+                <textarea
+                  className="rm2-textarea rm2-textarea-sm"
+                  placeholder="Observations finales, motif d'escalade ou résolution..."
+                  value={commentaire}
+                  onChange={(e) => setCommentaire(e.target.value)}
+                  rows={2}
+                />
+              </div>
+
+              <div className="rm2-field rm2-field-time">
+                <label className="rm2-label">
+                  <Timer size={13} /> Temps passé
+                  <span className="rm2-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="rm2-input"
+                  placeholder="Ex: 30 min"
+                  value={tempsPasse}
+                  onChange={(e) => setTempsPasse(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Validation indicator */}
+            {!isRapportComplete && (
+              <div className="rm2-validation-hint">
+                <AlertTriangle size={13} />
+                <span>Tous les champs du rapport sont obligatoires pour l'escalade vers N2</span>
+              </div>
+            )}
+            {isRapportComplete && (
+              <div className="rm2-validation-ok">
+                <CheckCircle size={13} />
+                <span>Rapport complet — prêt pour escalade ou clôture</span>
+              </div>
+            )}
+          </section>
+
         </div>
 
-        {/* Footer Actions */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-150 flex flex-col sm:flex-row justify-between items-center gap-3">
+        {/* ── FOOTER ── */}
+        <div className="rm2-footer">
           <button
+            className="rm2-btn rm2-btn-cancel"
             onClick={onClose}
-            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 rounded-lg transition-all focus:outline-none"
             disabled={loading}
           >
             Annuler
           </button>
 
-          <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-            {/* Escalade button */}
+          <div className="rm2-footer-actions">
+            {/* Escalader N2 */}
             <button
+              className="rm2-btn rm2-btn-escalate"
               onClick={() => handleAction('escalate')}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-lg text-xs font-bold shadow-sm transition-all focus:outline-none"
-              disabled={loading || !commentaire.trim()}
+              disabled={loading || !isRapportComplete}
+              title="Transmettre l'intervention au support N2"
             >
-              <AlertTriangle className="h-4 w-4" />
-              Escalader N2
+              {loading && pendingAction === 'escalate' ? (
+                <Loader2 size={16} className="rm2-spin" />
+              ) : (
+                <ShieldAlert size={16} />
+              )}
+              Escalader vers N2
             </button>
 
-            {/* Clôturer button */}
+            {/* Clôturer */}
             <button
+              className="rm2-btn rm2-btn-close"
               onClick={() => handleAction('close')}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all focus:outline-none"
-              disabled={loading || !commentaire.trim()}
+              disabled={loading || !isCloseValid}
+              title="Clôturer l'intervention comme résolue"
             >
-              <CheckCircle className="h-4 w-4" />
-              Clôturer (CLOSED)
+              {loading && pendingAction === 'close' ? (
+                <Loader2 size={16} className="rm2-spin" />
+              ) : (
+                <CheckCircle size={16} />
+              )}
+              Clôturer l'intervention
             </button>
           </div>
         </div>

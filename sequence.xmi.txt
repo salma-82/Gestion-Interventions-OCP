@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XMI xmlns:UML="http://www.omg.org/spec/UML/20110701" xmlns:xmi="http://www.omg.org/spec/XMI/20110701" xmi:version="2.1">
+  <xmi:Documentation exporter="PlantUML to XMI manual" />
+  <UML:Model xmi:id="model1" name="ModeleGestionInterventions" visibility="public">
+    <packagedElement xmi:type="UML:Collaboration" xmi:id="collab1" name="DiagrammeSequenceGestionInterventions">
+      <ownedUseCase xmi:type="UML:Interaction" xmi:id="interaction1" name="Sequence_Intervention">
+        <lifeline xmi:id="ll_Dem" name="Demandeur" represents="#Dem" />
+        <lifeline xmi:id="ll_N1" name="Technicien N1" represents="#N1" />
+        <lifeline xmi:id="ll_N2" name="Technicien N2" represents="#N2" />
+        <lifeline xmi:id="ll_N3" name="Technicien N3" represents="#N3" />
+        <lifeline xmi:id="ll_Adm" name="Admin" represents="#Adm" />
+        <lifeline xmi:id="ll_Sys" name="Système de gestion des interventions" represents="#Sys" />
+
+        <fragment xmi:type="UML:InteractionOperand" xmi:id="operand_creation" guard="premier">
+          <covered>ll_Dem</covered> <covered>ll_Sys</covered> <covered>ll_N1</covered> <covered>ll_Adm</covered>
+          <message xmi:id="msg1" name="Créer un ticket" sendEvent="#send1" receiveEvent="#rec1" messageSort="asynchCall">
+            <sendEvent xmi:id="send1" covered="ll_Dem" />
+            <receiveEvent xmi:id="rec1" covered="ll_Sys" />
+          </message>
+          <message xmi:id="msg2" name="Notification: nouveau ticket" sendEvent="#send2" receiveEvent="#rec2" messageSort="asynchSignal">
+            <sendEvent xmi:id="send2" covered="ll_Sys" />
+            <receiveEvent xmi:id="rec2" covered="ll_N1" />
+          </message>
+          <message xmi:id="msg3" name="Notification: nouveau ticket" sendEvent="#send3" receiveEvent="#rec3" messageSort="asynchSignal">
+            <sendEvent xmi:id="send3" covered="ll_Sys" />
+            <receiveEvent xmi:id="rec3" covered="ll_Adm" />
+          </message>
+          <message xmi:id="msg4" name="Confirmation ticket créé" sendEvent="#send4" receiveEvent="#rec4" messageSort="asynchCall">
+            <sendEvent xmi:id="send4" covered="ll_Sys" />
+            <receiveEvent xmi:id="rec4" covered="ll_Dem" />
+          </message>
+        </fragment>
+
+        <fragment xmi:type="UML:CombinedFragment" xmi:id="alt_n1" interactionOperator="alt">
+          <operand xmi:type="UML:InteractionOperand" xmi:id="alt_n1_resolu" guard="Résolu par N1">
+            <message xmi:id="msg5" name="Démarrer intervention (à distance)" sendEvent="#send5" receiveEvent="#rec5" messageSort="asynchCall">
+              <sendEvent xmi:id="send5" covered="ll_N1" />
+              <receiveEvent xmi:id="rec5" covered="ll_Sys" />
+            </message>
+            <message xmi:id="msg6" name="Statut = En cours N1" sendEvent="#send6" receiveEvent="#rec6" messageSort="reply">
+              <sendEvent xmi:id="send6" covered="ll_Sys" />
+              <receiveEvent xmi:id="rec6" covered="ll_N1" />
+            </message>
+            <message xmi:id="msg7" name="Remplir rapport (solution)" sendEvent="#send7" receiveEvent="#rec7" messageSort="asynchCall">
+              <sendEvent xmi:id="send7" covered="ll_N1" />
+              <receiveEvent xmi:id="rec7" covered="ll_Sys" />
+            </message>
+            <message xmi:id="msg8" name="Clôturer le ticket" sendEvent="#send8" receiveEvent="#rec8" messageSort="asynchCall">
+              <sendEvent xmi:id="send8" covered="ll_N1" />
+              <receiveEvent xmi:id="rec8" covered="ll_Sys" />
+            </message>
+            <message xmi:id="msg9" name="Notification clôture N1" sendEvent="#send9" receiveEvent="#rec9" messageSort="asynchSignal">
+              <sendEvent xmi:id="send9" covered="ll_Sys" />
+              <receiveEvent xmi:id="rec9" covered="ll_Adm" />
+            </message>
+            <message xmi:id="msg10" name="Ticket résolu, évaluation demandée" sendEvent="#send10" receiveEvent="#rec10" messageSort="asynchSignal">
+              <sendEvent xmi:id="send10" covered="ll_Sys" />
+              <receiveEvent xmi:id="rec10" covered="ll_Dem" />
+            </message>
+            <message xmi:id="msg11" name="Évaluer (note, commentaire)" sendEvent="#send11" receiveEvent="#rec11" messageSort="asynchCall">
+              <sendEvent xmi:id="send11" covered="ll_Dem" />
+              <receiveEvent xmi:id="rec11" covered="ll_Sys" />
+            </message>
+            <message xmi:id="msg12" name="Évaluation enregistrée" sendEvent="#send12" receiveEvent="#rec12" messageSort="reply">
+              <sendEvent xmi:id="send12" covered="ll_Sys" />
+              <receiveEvent xmi:id="rec12" covered="ll_Dem" />
+            </message>
+          </operand>
+          <operand xmi:type="UML:InteractionOperand" xmi:id="alt_n1_escalade" guard="Non résolu (escalade N2)">
+            <message xmi:id="msg13" name="Escalader vers N2" sendEvent="#send13" receiveEvent="#rec13" messageSort="asynchCall">
+              <sendEvent xmi:id="send13" covered="ll_N1" />
+              <receiveEvent xmi:id="rec13" covered="ll_Sys" />
+            </message>
+            <message xmi:id="msg14" name="Notification escalade N1?N2" sendEvent="#send14" receiveEvent="#rec14" messageSort="asynchSignal">
+              <sendEvent xmi:id="send14" covered="ll_Sys" />
+              <receiveEvent xmi:id="rec14" covered="ll_N2" />
+            </message>
+            <message xmi:id="msg15" name="Notification escalade N1?N2" sendEvent="#send15" receiveEvent="#rec15" messageSort="asynchSignal">
+              <sendEvent xmi:id="send15" covered="ll_Sys" />
+              <receiveEvent xmi:id="rec15" covered="ll_Adm" />
+            </message>
+
+            <!-- Intervention N2 -->
+            <fragment xmi:type="UML:CombinedFragment" xmi:id="alt_n2" interactionOperator="alt">
+              <operand xmi:type="UML:InteractionOperand" xmi:id="alt_n2_resolu" guard="Résolu par N2">
+                <message xmi:id="msg16" name="Démarrer intervention (sur site)" sendEvent="#send16" receiveEvent="#rec16" messageSort="asynchCall">
+                  <sendEvent xmi:id="send16" covered="ll_N2" />
+                  <receiveEvent xmi:id="rec16" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg17" name="Statut = En cours N2" sendEvent="#send17" receiveEvent="#rec17" messageSort="reply">
+                  <sendEvent xmi:id="send17" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec17" covered="ll_N2" />
+                </message>
+                <message xmi:id="msg18" name="Remplir rapport (actions)" sendEvent="#send18" receiveEvent="#rec18" messageSort="asynchCall">
+                  <sendEvent xmi:id="send18" covered="ll_N2" />
+                  <receiveEvent xmi:id="rec18" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg19" name="Clôturer le ticket" sendEvent="#send19" receiveEvent="#rec19" messageSort="asynchCall">
+                  <sendEvent xmi:id="send19" covered="ll_N2" />
+                  <receiveEvent xmi:id="rec19" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg20" name="Notification clôture N2" sendEvent="#send20" receiveEvent="#rec20" messageSort="asynchSignal">
+                  <sendEvent xmi:id="send20" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec20" covered="ll_Adm" />
+                </message>
+                <message xmi:id="msg21" name="Ticket résolu, évaluation demandée" sendEvent="#send21" receiveEvent="#rec21" messageSort="asynchSignal">
+                  <sendEvent xmi:id="send21" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec21" covered="ll_Dem" />
+                </message>
+                <message xmi:id="msg22" name="Évaluer" sendEvent="#send22" receiveEvent="#rec22" messageSort="asynchCall">
+                  <sendEvent xmi:id="send22" covered="ll_Dem" />
+                  <receiveEvent xmi:id="rec22" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg23" name="Évaluation enregistrée" sendEvent="#send23" receiveEvent="#rec23" messageSort="reply">
+                  <sendEvent xmi:id="send23" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec23" covered="ll_Dem" />
+                </message>
+              </operand>
+              <operand xmi:type="UML:InteractionOperand" xmi:id="alt_n2_escalade" guard="Non résolu (escalade N3)">
+                <message xmi:id="msg24" name="Escalader vers N3" sendEvent="#send24" receiveEvent="#rec24" messageSort="asynchCall">
+                  <sendEvent xmi:id="send24" covered="ll_N2" />
+                  <receiveEvent xmi:id="rec24" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg25" name="Notification escalade N2?N3" sendEvent="#send25" receiveEvent="#rec25" messageSort="asynchSignal">
+                  <sendEvent xmi:id="send25" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec25" covered="ll_N3" />
+                </message>
+                <message xmi:id="msg26" name="Notification escalade N2?N3" sendEvent="#send26" receiveEvent="#rec26" messageSort="asynchSignal">
+                  <sendEvent xmi:id="send26" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec26" covered="ll_Adm" />
+                </message>
+
+                <!-- Intervention N3 -->
+                <message xmi:id="msg27" name="Démarrer intervention (sur site)" sendEvent="#send27" receiveEvent="#rec27" messageSort="asynchCall">
+                  <sendEvent xmi:id="send27" covered="ll_N3" />
+                  <receiveEvent xmi:id="rec27" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg28" name="Statut = En cours N3" sendEvent="#send28" receiveEvent="#rec28" messageSort="reply">
+                  <sendEvent xmi:id="send28" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec28" covered="ll_N3" />
+                </message>
+                <message xmi:id="msg29" name="Remplacer l'équipement défectueux" sendEvent="#send29" receiveEvent="#rec29" messageSort="asynchCall">
+                  <sendEvent xmi:id="send29" covered="ll_N3" />
+                  <receiveEvent xmi:id="rec29" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg30" name="Remplir rapport (remplacement)" sendEvent="#send30" receiveEvent="#rec30" messageSort="asynchCall">
+                  <sendEvent xmi:id="send30" covered="ll_N3" />
+                  <receiveEvent xmi:id="rec30" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg31" name="Clôturer le ticket" sendEvent="#send31" receiveEvent="#rec31" messageSort="asynchCall">
+                  <sendEvent xmi:id="send31" covered="ll_N3" />
+                  <receiveEvent xmi:id="rec31" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg32" name="Notification clôture N3 (matériel changé)" sendEvent="#send32" receiveEvent="#rec32" messageSort="asynchSignal">
+                  <sendEvent xmi:id="send32" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec32" covered="ll_Adm" />
+                </message>
+                <message xmi:id="msg33" name="Ticket résolu, évaluation demandée" sendEvent="#send33" receiveEvent="#rec33" messageSort="asynchSignal">
+                  <sendEvent xmi:id="send33" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec33" covered="ll_Dem" />
+                </message>
+                <message xmi:id="msg34" name="Évaluer" sendEvent="#send34" receiveEvent="#rec34" messageSort="asynchCall">
+                  <sendEvent xmi:id="send34" covered="ll_Dem" />
+                  <receiveEvent xmi:id="rec34" covered="ll_Sys" />
+                </message>
+                <message xmi:id="msg35" name="Évaluation enregistrée" sendEvent="#send35" receiveEvent="#rec35" messageSort="reply">
+                  <sendEvent xmi:id="send35" covered="ll_Sys" />
+                  <receiveEvent xmi:id="rec35" covered="ll_Dem" />
+                </message>
+              </operand>
+            </fragment>
+          </operand>
+        </fragment>
+      </ownedUseCase>
+    </packagedElement>
+  </UML:Model>
+</XMI>

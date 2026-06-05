@@ -71,14 +71,23 @@ export default function TicketCard({ data, onStart, activeActions }) {
   // Resolve status tags
   const getStatusConfig = (st) => {
     const s = String(st).toUpperCase();
-    if (s === 'EN_ATTENTE' || s === 'PENDING') {
+    if (s === 'EN_ATTENTE' || s === 'PENDING' || s === 'OUVERT') {
       return { label: 'En attente N1', bg: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' };
     }
     if (s === 'EN_COURS_N1' || s === 'IN_PROGRESS_N1') {
       return { label: 'En cours N1', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' };
     }
+    if (s === 'EN_COURS_N2' || s === 'IN_PROGRESS_N2') {
+      return { label: 'En cours N2', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' };
+    }
+    if (s === 'EN_COURS_N3' || s === 'IN_PROGRESS_N3') {
+      return { label: 'En cours N3', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' };
+    }
     if (s === 'ESCALADE_N2' || s === 'ESCALATED_N2') {
       return { label: 'Escaladé N2', bg: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' };
+    }
+    if (s === 'ESCALADE_N3' || s === 'ESCALATED_N3') {
+      return { label: 'Escaladé N3', bg: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' };
     }
     if (s === 'CLOTURE' || s === 'CLOSED') {
       return { label: 'Clôturé', bg: 'bg-slate-100 text-slate-700 border-slate-200', dot: 'bg-slate-500' };
@@ -100,8 +109,16 @@ export default function TicketCard({ data, onStart, activeActions }) {
 
   const statusConfig = getStatusConfig(statut);
   const priorityConfig = getPriorityConfig(priorite);
-  const isEnCours = String(statut).toUpperCase() === 'EN_COURS_N1' || String(statut).toUpperCase() === 'IN_PROGRESS_N1';
-  const isEnAttente = String(statut).toUpperCase() === 'EN_ATTENTE' || String(statut).toUpperCase() === 'PENDING';
+  const isEnCours = String(statut).toUpperCase() === 'EN_COURS' || 
+                    String(statut).toUpperCase() === 'EN_COURS_N1' || 
+                    String(statut).toUpperCase() === 'IN_PROGRESS_N1' ||
+                    String(statut).toUpperCase() === 'EN_COURS_N2' ||
+                    String(statut).toUpperCase() === 'IN_PROGRESS_N2' ||
+                    String(statut).toUpperCase() === 'EN_COURS_N3' ||
+                    String(statut).toUpperCase() === 'IN_PROGRESS_N3';
+  const isEnAttente = String(statut).toUpperCase() === 'EN_ATTENTE' || 
+                      String(statut).toUpperCase() === 'PENDING' ||
+                      String(statut).toUpperCase() === 'OUVERT';
 
   return (
     <div 
@@ -146,7 +163,7 @@ export default function TicketCard({ data, onStart, activeActions }) {
               <Cpu className="h-4 w-4 text-emerald-600 flex-shrink-0" />
               <span className="text-slate-400">Équipement:</span>
               <span className="font-semibold text-slate-700 truncate">
-                {equipement?.nom || 'Inconnu'} {equipement?.reference ? `[${equipement.reference}]` : ''}
+                {equipement?.nom || 'Inconnu'} {equipement?.codeInventaire ? `[${equipement.codeInventaire}]` : ''}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs">
@@ -207,15 +224,15 @@ export default function TicketCard({ data, onStart, activeActions }) {
 
         {/* Action Button Row */}
         <div className="mt-5 pt-3 border-t border-slate-100">
-          {isEnAttente && onStart && (
-            <button
-              onClick={() => onStart(ticketId)}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none"
-            >
-              <Play className="h-4 w-4 fill-white" />
-              🚀 Prendre en charge
-            </button>
-          )}
+            { (isEnAttente || String(statut).toUpperCase().startsWith('ESCALADE_')) && onStart && ( (String(statut).toUpperCase() === 'ESCALADE_N2' && ticket.assignedTechnicianRole === 'ROLE_N2') || (String(statut).toUpperCase() === 'ESCALADE_N3' && ticket.assignedTechnicianRole === 'ROLE_N3') || isEnAttente ) && (
+              <button
+                onClick={() => onStart(ticketId)}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none"
+              >
+                <Play className="h-4 w-4 fill-white" />
+                🚀 Prendre en charge
+              </button>
+            )}
 
           {isEnCours && activeActions && isIntervention && (
             <div className="grid grid-cols-2 gap-2">

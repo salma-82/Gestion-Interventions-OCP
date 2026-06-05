@@ -17,6 +17,7 @@ import {
 
 import "./DemandeurDashboard.css";
 import UserProfile from "./UserProfile";
+import TicketDetailsModal from "../../../components/TicketDetailsModal";
 
 const API = "http://localhost:8080/api/demandeur/tickets";
 
@@ -30,6 +31,12 @@ export default function DemandeurDashboard() {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [note, setNote] = useState(5);
   const [commentaire, setCommentaire] = useState("");
+  // Flag to indicate whether an evaluation already exists for the selected ticket
+  const [evalExists, setEvalExists] = useState(false);
+
+  // État pour les détails d'un ticket
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailTicket, setDetailTicket] = useState(null);
 
   const token = localStorage.getItem("token");
   const demandeurId = Number(localStorage.getItem("userId"));
@@ -62,14 +69,29 @@ export default function DemandeurDashboard() {
   }, []);
 
   // Ouvrir le modal d'évaluation si le ticket est résolu ou clôturé
-  const handleRowAction = (ticket) => {
-    if (ticket.statut === "RESOLU" || ticket.statut === "CLOTURE") {
+  const handleRowAction = async (ticket) => {
+    if (ticket.statut === "CLOSED" || ticket.statut === "CLOTURE") {
+      try {
+        const res = await axios.get(`http://localhost:8080/api/evaluations/ticket/${ticket.id}`, { headers });
+        if (res.data) {
+          setNote(res.data.note);
+          setCommentaire(res.data.commentaire || "");
+          setEvalExists(true);
+        } else {
+          setNote(5);
+          setCommentaire("");
+          setEvalExists(false);
+        }
+      } catch (err) {
+        setNote(5);
+        setCommentaire("");
+        setEvalExists(false);
+      }
       setSelectedTicket(ticket);
-      setNote(5); // Valeur par défaut
-      setCommentaire("");
       setShowEvalModal(true);
     } else {
-      alert("Ce ticket est encore en cours de traitement.");
+      setDetailTicket(ticket);
+      setShowDetailModal(true);
     }
   };
 
@@ -78,8 +100,8 @@ export default function DemandeurDashboard() {
     try {
       // Ajuste l'URL selon l'endpoint exact de ton API Spring Boot
       await axios.post(
-        `http://localhost:8080/api/demandeur/tickets/${selectedTicket.id}/evaluer`,
-        { note, commentaire },
+        `http://localhost:8080/api/evaluations`,
+        { ticketId: selectedTicket.id, note, commentaire },
         { headers }
       );
       alert("Merci pour votre évaluation ! ⭐");
@@ -247,36 +269,44 @@ export default function DemandeurDashboard() {
                                   </span>
                                 </td>
                                 <td>
-                                  {/* STEPPER SYNCHRONISÉ AVEC LE STATUT */}
                                   <div className="ddm-stepper">
-                                    <div className={`ddm-step-wrapper ${t.statut === "EN_ATTENTE" ? "active" : ""}`}>
-                                      <div className="ddm-step-circle completed"><div className="ddm-step-inner"></div></div>
-                                      <span className="ddm-step-label">Créé</span>
-                                    </div>
-                                    <div className={`ddm-step-line ${t.statut !== "EN_ATTENTE" ? "completed" : ""}`} />
-                                    <div className={`ddm-step-wrapper ${t.statut === "EN_COURS" ? "active" : ""}`}>
-                                      <div className={`ddm-step-circle ${t.statut !== "EN_ATTENTE" ? "completed" : ""}`}>{t.statut !== "EN_ATTENTE" && <div className="ddm-step-inner"></div>}</div>
-                                      <span className="ddm-step-label">En traitement</span>
-                                    </div>
-                                    <div className={`ddm-step-line ${t.statut === "CLOTURE" || t.statut === "RESOLU" ? "completed" : ""}`} />
-                                    <div className={`ddm-step-wrapper ${t.statut === "CLOTURE" || t.statut === "RESOLU" ? "active" : ""}`}>
-                                      <div className={`ddm-step-circle ${t.statut === "CLOTURE" || t.statut === "RESOLU" ? "completed" : ""}`}>{ (t.statut === "CLOTURE" || t.statut === "RESOLU") && <div className="ddm-step-inner"></div>}</div>
-                                      <span className="ddm-step-label">Résolu</span>
-                                    </div>
+                                    {(() => {
+                                      const mapStatus = (statut) => {
+                                        if (statut === "PENDING") return "CREÉ";
+                                        if (statut === "CLOSED" || statut === "CLOTURE") return "RÉSOLU";
+                                        return "EN TRAITEMENT";
+                                      };
+                                      const display = mapStatus(t.statut);
+                                      return (
+                                        <>
+                                          <div className={`ddm-step-wrapper ${display === "CREÉ" ? "active" : ""}`}>
+                                            <div className="ddm-step-circle completed">
+                                            <div className="ddm-step-inner"/></div>
+                                            <span className="ddm-step-label">Créé</span>
+                                          </div>
+                                          <div className={`ddm-step-line ${display !== "CREÉ" ? "completed" : ""}`} />
+                                          <div className={`ddm-step-wrapper ${display === "EN TRAITEMENT" ? "active" : ""}`}>
+                                            <div className={`ddm-step-circle ${display !== "CREÉ" ? "completed" : ""}`}>
+                                              {display !== "CREÉ" && <div className="ddm-step-inner"/>}
+                                            </div>
+                                            <span className="ddm-step-label">En traitement</span>
+                                          </div>
+                                          <div className={`ddm-step-line ${display === "RÉSOLU" ? "completed" : ""}`} />
+                                          <div className={`ddm-step-wrapper ${display === "RÉSOLU" ? "active" : ""}`}>
+                                            <div className={`ddm-step-circle ${display === "RÉSOLU" ? "completed" : ""}`}>
+                                              {display === "RÉSOLU" && <div className="ddm-step-inner"/>}
+                                            </div>
+                                            <span className="ddm-step-label">Résolu</span>
+                                          </div>
+                                        </>
+                                      );
+                                    })()}
                                   </div>
                                 </td>
                                 <td style={{ textAlign: 'center' }}>
-                                  {(t.statut === "RESOLU" || t.statut === "CLOTURE") ? (
-                                    <button 
-                                      onClick={() => handleRowAction(t)} 
-                                      className="ddm-btn ddm-btn-eval"
-                                      style={{ padding: '4px 8px', fontSize: '12px', backgroundColor: '#e4e7eb', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                    >
-                                      Évaluer ⭐
-                                    </button>
-                                  ) : (
-                                    <button onClick={() => handleRowAction(t)} className="ddm-arrow-btn"><ChevronRight size={20} /></button>
-                                  )}
+                                  <button onClick={() => handleRowAction(t)} className="ddm-arrow-btn">
+                                    <ChevronRight size={20} />
+                                  </button>
                                 </td>
                               </tr>
                             ))
@@ -314,14 +344,14 @@ export default function DemandeurDashboard() {
         <div className="ddm-modal-overlay">
           <div className="ddm-modal-content">
             <div className="ddm-modal-header">
-              <h3>Évaluation de l'intervention #{selectedTicket?.id}</h3>
+              <h3>{evalExists ? "Votre Évaluation" : `Évaluation de l'intervention #${selectedTicket?.id}`}</h3>
               <button className="ddm-close-modal" onClick={() => setShowEvalModal(false)}>
                 <X size={20} />
               </button>
             </div>
             <div className="ddm-modal-body">
               <p>Le technicien a clôturé votre incident : <strong>{selectedTicket?.titre}</strong>.</p>
-              <p>Veuillez noter la qualité du service rendu :</p>
+              <p>{evalExists ? "Vous avez déjà évalué cette intervention :" : "Veuillez noter la qualité du service rendu :"}</p>
               
               {/* Système d'étoiles interactives (1 à 5) */}
               <div className="ddm-stars-container" style={{ display: 'flex', gap: '8px', margin: '16px 0' }}>
@@ -329,8 +359,8 @@ export default function DemandeurDashboard() {
                   <Star
                     key={star}
                     size={32}
-                    onClick={() => setNote(star)}
-                    style={{ cursor: 'pointer', transition: 'color 0.2s' }}
+                    onClick={() => !evalExists && setNote(star)}
+                    style={{ cursor: evalExists ? 'default' : 'pointer', transition: 'color 0.2s' }}
                     fill={star <= note ? "#ffc107" : "none"}
                     color={star <= note ? "#ffc107" : "#ccc"}
                   />
@@ -344,19 +374,32 @@ export default function DemandeurDashboard() {
                   rows={3}
                   placeholder="Laissez un commentaire sur la rapidité, l'efficacité..."
                   value={commentaire}
+                  readOnly={evalExists}
                   onChange={(e) => setCommentaire(e.target.value)}
                 />
               </div>
             </div>
             <div className="ddm-modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button className="ddm-btn ddm-btn-secondary" onClick={() => setShowEvalModal(false)}>Annuler</button>
-              <button className="ddm-btn ddm-btn-primary" onClick={handleSendEvaluation}>
-                Enregistrer l'évaluation
-              </button>
+              <button className="ddm-btn ddm-btn-secondary" onClick={() => setShowEvalModal(false)}>{evalExists ? "Fermer" : "Annuler"}</button>
+              {!evalExists && (
+                <button className="ddm-btn ddm-btn-primary" onClick={handleSendEvaluation}>
+                  Enregistrer l'évaluation
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Ticket Details Modal */}
+      <TicketDetailsModal
+        isOpen={showDetailModal}
+        onClose={() => {
+          setShowDetailModal(false);
+          setDetailTicket(null);
+        }}
+        ticket={detailTicket}
+      />
 
     </div>
   );
@@ -368,9 +411,31 @@ function NewTicketForm({ onSuccess, headers, demandeurId, onCancel }) {
     titre: "",
     description: "",
     priorite: "LOW",
-    statut: "EN_ATTENTE",
+    statut: "PENDING",
     equipement: { id: "" }
   });
+
+  const [equipements, setEquipements] = useState([]);
+  const [loadingEquipements, setLoadingEquipements] = useState(true);
+  const [equipError, setEquipError] = useState("");
+
+  // Charger la liste des équipements au montage
+  useEffect(() => {
+    const fetchEquipements = async () => {
+      try {
+        setLoadingEquipements(true);
+        setEquipError("");
+        const res = await axios.get("http://localhost:8080/api/demandeur/equipements", { headers });
+        setEquipements(res.data || []);
+      } catch (err) {
+        console.error("Erreur chargement équipements:", err);
+        setEquipError("Impossible de charger la liste des équipements. Vérifiez votre connexion.");
+      } finally {
+        setLoadingEquipements(false);
+      }
+    };
+    fetchEquipements();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -384,7 +449,7 @@ function NewTicketForm({ onSuccess, headers, demandeurId, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.titre.trim() || !form.description.trim() || !form.equipement.id) {
-      alert("Veuillez remplir tous les champs obligatoires.");
+      alert("Veuillez remplir tous les champs obligatoires, y compris l'équipement.");
       return;
     }
     try {
@@ -392,9 +457,14 @@ function NewTicketForm({ onSuccess, headers, demandeurId, onCancel }) {
       alert("Demande d'intervention enregistrée avec succès ! ✅");
       onSuccess();
     } catch (err) {
-      alert("Erreur lors de la création du ticket. Vérifiez l'ID d'équipement.");
+      console.error(err);
+      const msg = err?.response?.data?.message || "Erreur lors de la création du ticket.";
+      alert("❌ " + msg);
     }
   };
+
+  // Trouver l'équipement sélectionné pour afficher ses détails
+  const selectedEquip = equipements.find(e => e.id === form.equipement.id);
 
   return (
     <div className="ddm-card">
@@ -421,17 +491,58 @@ function NewTicketForm({ onSuccess, headers, demandeurId, onCancel }) {
             />
           </div>
 
+          {/* DROPDOWN ÉQUIPEMENT — remplace le champ ID texte */}
           <div className="ddm-form-group ddm-grid-full">
-            <label className="ddm-form-label">ID de l'équipement concerné <span>*</span></label>
-            <input
-              name="equipementId"
-              type="number"
-              placeholder="Saisissez l'identifiant numérique de l'équipement (Ex: 1, 4...)"
-              value={form.equipement.id}
-              onChange={handleChange}
-              className="ddm-form-control"
-              required
-            />
+            <label className="ddm-form-label">Équipement concerné <span>*</span></label>
+            {loadingEquipements ? (
+              <div style={{ padding: '10px 14px', background: '#f1f5f9', borderRadius: '8px', color: '#64748b', fontSize: '0.9rem' }}>
+                ⏳ Chargement des équipements...
+              </div>
+            ) : equipError ? (
+              <div style={{ padding: '10px 14px', background: '#fee2e2', borderRadius: '8px', color: '#dc2626', fontSize: '0.9rem' }}>
+                ⚠️ {equipError}
+              </div>
+            ) : (
+              <>
+                <div className="ddm-form-select-wrapper">
+                  <select
+                    name="equipementId"
+                    value={form.equipement.id}
+                    onChange={handleChange}
+                    className="ddm-form-control"
+                    required
+                  >
+                    <option value="">-- Sélectionnez un équipement --</option>
+                    {equipements.map(eq => (
+                      <option key={eq.id} value={eq.id}>
+                        [{eq.codeInventaire}] {eq.nom} — {eq.type} {eq.marque} ({eq.localisation || 'Localisation inconnue'})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="ddm-form-select-icon"><ChevronRight size={16} style={{ transform: 'rotate(90deg)' }} /></div>
+                </div>
+                {/* Carte de détails de l'équipement sélectionné */}
+                {selectedEquip && (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)',
+                    borderRadius: '10px',
+                    border: '1px solid #bfdbfe',
+                    fontSize: '0.85rem',
+                    color: '#1e3a5f',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '6px'
+                  }}>
+                    <span>🏷️ <strong>Modèle :</strong> {selectedEquip.marque} {selectedEquip.modele}</span>
+                    <span>📍 <strong>Localisation :</strong> {selectedEquip.localisation || '—'}</span>
+                    <span>🔢 <strong>N° Série :</strong> {selectedEquip.numeroSerie || '—'}</span>
+                    <span>📋 <strong>Statut :</strong> <span style={{ color: selectedEquip.statut === 'ACTIF' ? '#16a34a' : '#d97706' }}>{selectedEquip.statut}</span></span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div className="ddm-form-group ddm-grid-full">
@@ -468,9 +579,11 @@ function NewTicketForm({ onSuccess, headers, demandeurId, onCancel }) {
 
         <div className="ddm-form-actions-bottom">
           <button type="button" onClick={onCancel} className="ddm-btn ddm-btn-secondary">Annuler</button>
-          <button type="submit" className="ddm-btn ddm-btn-primary"><Send size={18} /> Soumettre au Support</button>
+          <button type="submit" className="ddm-btn ddm-btn-primary" disabled={loadingEquipements || !!equipError}>
+            <Send size={18} /> Soumettre au Support
+          </button>
         </div>
       </form>
     </div>
   );
-}
+}
