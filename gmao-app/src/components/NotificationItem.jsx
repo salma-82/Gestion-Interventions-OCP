@@ -1,0 +1,165 @@
+import React from 'react';
+import {
+  CheckCircle,
+  Mail,
+  Clock,
+  ArrowUpRight,
+  RefreshCw,
+  XCircle,
+  Bell,
+  Wrench,
+  PackageCheck
+} from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
+
+// Map notification types to icons and accent colors
+const TYPE_MAP = {
+  NEW_TICKET:           { icon: Bell,         color: '#10b981', bg: '#ecfdf5' },
+  ASSIGNED_TICKET:      { icon: Mail,          color: '#10b981', bg: '#ecfdf5' },
+  ESCALATED_N1_N2:      { icon: ArrowUpRight,  color: '#f59e0b', bg: '#fffbeb' },
+  ESCALATED_N2_N3:      { icon: ArrowUpRight,  color: '#ef4444', bg: '#fef2f2' },
+  INTERVENTION_STARTED: { icon: Wrench,        color: '#3b82f6', bg: '#eff6ff' },
+  INTERVENTION_CLOSED:  { icon: CheckCircle,   color: '#10b981', bg: '#ecfdf5' },
+  EQUIPMENT_REPLACED:   { icon: PackageCheck,  color: '#8b5cf6', bg: '#f5f3ff' },
+  INTERVENTION_REJECTED:{ icon: XCircle,       color: '#ef4444', bg: '#fef2f2' },
+};
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now - date) / 1000);
+  if (diff < 60) return `il y a ${diff}s`;
+  if (diff < 3600) return `il y a ${Math.floor(diff / 60)}min`;
+  if (diff < 86400) return `il y a ${Math.floor(diff / 3600)}h`;
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+
+export default function NotificationItem({ notification }) {
+  const { markAsRead } = useNotifications();
+  const isUnread = !(notification.lu || notification.read);
+  const meta = TYPE_MAP[notification.type] || { icon: Bell, color: '#64748b', bg: '#f8fafc' };
+  const Icon = meta.icon;
+
+  const handleMarkRead = async (e) => {
+    e.stopPropagation();
+    await markAsRead(notification.id);
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: '12px',
+        padding: '14px 16px',
+        borderBottom: '1px solid #f1f5f9',
+        backgroundColor: isUnread ? '#f0fdf4' : '#ffffff',
+        transition: 'background 0.15s',
+        cursor: 'default',
+      }}
+      onMouseEnter={e => e.currentTarget.style.backgroundColor = isUnread ? '#dcfce7' : '#f8fafc'}
+      onMouseLeave={e => e.currentTarget.style.backgroundColor = isUnread ? '#f0fdf4' : '#ffffff'}
+    >
+      {/* Icon bubble */}
+      <div style={{
+        width: '36px',
+        height: '36px',
+        borderRadius: '50%',
+        backgroundColor: meta.bg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <Icon size={16} color={meta.color} />
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Title */}
+        <p style={{
+          fontSize: '13px',
+          fontWeight: isUnread ? '600' : '400',
+          color: '#1e293b',
+          margin: '0 0 2px 0',
+          lineHeight: '1.4',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {notification.title || notification.message || notification.contenu || 'Notification'}
+        </p>
+
+        {/* Description */}
+        {notification.description && (
+          <p style={{
+            fontSize: '12px',
+            color: '#64748b',
+            margin: '0 0 6px 0',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+            {notification.description}
+          </p>
+        )}
+
+        {/* Footer row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#94a3b8' }}>
+            <Clock size={11} />
+            {timeAgo(notification.date || notification.createdAt || notification.dateCreation)}
+          </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Level badge */}
+            {notification.level && (
+              <span style={{
+                fontSize: '10px',
+                fontWeight: '700',
+                padding: '2px 7px',
+                borderRadius: '99px',
+                backgroundColor: '#dcfce7',
+                color: '#065f46',
+              }}>
+                {notification.level}
+              </span>
+            )}
+
+            {/* Mark as read button */}
+            {isUnread && (
+              <button
+                onClick={handleMarkRead}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  color: '#059669',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#047857'}
+                onMouseLeave={e => e.currentTarget.style.color = '#059669'}
+              >
+                ✓ Lu
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Unread dot */}
+      {isUnread && (
+        <div style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: '#10b981',
+          flexShrink: 0,
+          marginTop: '4px',
+        }} />
+      )}
+    </div>
+  );
+}

@@ -394,3 +394,67 @@ textarea.ddm-form-control { resize: vertical; }
 
 .ddm-form-actions-bottom { display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; margin-top: 1rem; }
 .ddm-empty-state, .ddm-loading-spinner { text-align: center; padding: 3rem; color: #64748b; font-weight: 500; }
+
+/* ================= MODAL EVALUATION - MODERN GLASSMORPHISM ================= */
+.ddm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+}
+
+.ddm-modal-content input,
+.ddm-modal-content textarea {
+  color: #000000 !important;
+}
+.ddm-modal-content {
+  background: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: ddm-fade-in 0.3s ease-out;
+}
+
+
+@keyframes ddm-fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ddm-modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #0f172a;
+}
+
+.ddm-close-modal {
+  background: transparent;
+  border: none;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.ddm-modal-body p {
+  margin-bottom: 1rem;
+  color: #334155;
+}
+
+.ddm-modal-footer .ddm-btn-primary {
+  background-color: #047857;
+}
+
+.ddm-modal-footer .ddm-btn-secondary {
+  background-color: #f1f5f9;
+}

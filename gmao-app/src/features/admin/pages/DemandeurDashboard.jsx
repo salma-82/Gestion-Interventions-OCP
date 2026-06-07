@@ -65,7 +65,11 @@ export default function DemandeurDashboard() {
   };
 
   useEffect(() => {
-    if (demandeurId) fetchTickets();
+    if (demandeurId) {
+      fetchTickets();
+      const interval = setInterval(fetchTickets, 10000);
+      return () => clearInterval(interval);
+    }
   }, []);
 
   // Ouvrir le modal d'évaluation si le ticket est résolu ou clôturé

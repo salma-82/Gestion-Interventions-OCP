@@ -97,8 +97,19 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      const unreadNotifs = notifications.filter(n => !(n.lu || n.read));
+      await Promise.all(unreadNotifs.map(n => markNotificationRead(n.id)));
+      await fetchNotifications();
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      toast.error('Erreur lors du marquage de toutes les notifications comme lues');
+    }
+  };
+
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, fetchNotifications, markAsRead }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead }}>
       {children}
     </NotificationContext.Provider>
   );
