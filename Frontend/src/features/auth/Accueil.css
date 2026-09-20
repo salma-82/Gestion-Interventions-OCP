@@ -1,0 +1,871 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+}
+
+.page {
+    min-height: 100vh;
+    background: #f5faf7;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* ===== NAVIGATION - Logo gauche, liens centrés, bouton droite ===== */
+.nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: background 0.3s, box-shadow 0.3s;
+    backdrop-filter: blur(12px);
+}
+
+.nav.scrolled {
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 2px 24px rgba(0, 80, 40, 0.08);
+}
+
+.nav:not(.scrolled) {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* pousse logo à gauche, bouton à droite */
+}
+
+/* Logo à gauche */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.logo:hover {
+    opacity: 0.8;
+}
+
+.navbar-logo-img {
+    height: 40px;
+    width: auto;
+}
+
+.logo-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1a2e1a;
+    letter-spacing: -0.3px;
+}
+
+.logo-sub {
+    font-size: 11px;
+    color: #00a651;
+    font-weight: 500;
+}
+
+/* Liens centrés */
+.nav-links {
+    display: flex;
+    gap: 28px;
+    margin: 0 auto;
+    /* centre horizontalement */
+}
+
+.nav-link {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #444;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s;
+    font-family: inherit;
+    padding: 4px 0;
+}
+
+.nav-link:hover {
+    color: #00a651;
+}
+
+/* Bouton à droite */
+.connect-btn {
+    background: #00a651;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 9px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: inherit;
+    flex-shrink: 0;
+    /* empêche le rétrécissement */
+}
+
+.connect-btn:hover {
+    background: #008f44;
+}
+
+.connect-btn:active {
+    transform: scale(0.97);
+}
+
+/* ===== HERO ===== */
+.hero {
+    position: relative;
+    text-align: center;
+    padding: 80px 24px 60px;
+    overflow: hidden;
+    background: linear-gradient(160deg, #edfaf3 0%, #f5faf7 60%, #e8f5e9 100%);
+}
+
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 20%, rgba(0, 166, 81, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.hero-diamond {
+    position: absolute;
+    top: 40px;
+    right: 18%;
+    width: 90px;
+    height: 90px;
+    background: rgba(0, 166, 81, 0.07);
+    transform: rotate(45deg);
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    color: #1a2e1a;
+    line-height: 1.15;
+    margin-bottom: 20px;
+}
+
+.hero-green {
+    color: #00a651;
+}
+
+.hero-sub {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.7;
+    max-width: 540px;
+    margin: 0 auto;
+}
+
+/* ===== SECTIONS COMMUNES ===== */
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a2e1a;
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: #00a651;
+    margin: 12px auto 0;
+    border-radius: 2px;
+}
+
+/* ===== TIMELINE (Histoire) ===== */
+/* ===== TIMELINE (Histoire) ===== */
+.timeline-section {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 24px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Force le titre à se caler au milieu horizontal */
+}
+
+/* --- AJOUT : TITRE DE L'HISTOIRE PARFAITEMENT AU MILIEU --- */
+.timeline-section .section-title {
+    text-align: center;
+    display: inline-block;
+    width: auto;
+    margin: 0 auto 48px auto; /* Centre le bloc et gère l'espace avec les cartes */
+}
+
+/* La petite barre verte sous "Notre Histoire", elle aussi centrée */
+.timeline-section .section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: #00a651; /* Le vert OCP */
+    margin: 12px auto 0 auto; /* Le "auto" force le centrage absolu de la ligne */
+    border-radius: 2px;
+}
+
+/* --- LE RESTE DE TON CODE RESTE IDENTIQUE --- */
+.timeline-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, #c8e6c9 10%, #a5d6a7 50%, #c8e6c9 90%, transparent);
+    transform: translateX(-50%);
+}
+
+.timeline-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 48px;
+    position: relative;
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    width: 100%; /* Assure que la ligne prend toute la largeur pour le flex */
+}
+
+.timeline-row.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.timeline-half {
+    flex: 1;
+    display: flex;
+    padding: 0 24px;
+}
+
+.dot-wrap {
+    width: 24px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #00a651;
+    box-shadow: 0 0 0 4px rgba(0, 166, 81, 0.12);
+    animation: pulse-dot 2.4s infinite;
+    z-index: 2;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(0, 166, 81, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(0, 166, 81, 0);
+    }
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    max-width: 340px;
+    box-shadow: 0 4px 24px rgba(0, 80, 40, 0.07);
+    border: 1px solid #e8f5e9;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 80, 40, 0.12);
+}
+
+.year-badge {
+    display: inline-block;
+    background: #00a651;
+    color: white;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a2e1a;
+    margin-bottom: 10px;
+}
+
+.card-desc {
+    font-size: 13.5px;
+    color: #666;
+    line-height: 1.65;
+}
+
+.img-wrap {
+    max-width: 320px;
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 80, 40, 0.12);
+    border: 1px solid #e0f2e9;
+    transition: transform 0.2s;
+}
+
+.img-wrap:hover {
+    transform: scale(1.02);
+}
+
+.img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+/* ===== STATISTIQUES ===== */
+/* --- SECTION STATISTIQUES --- */
+.stats-section {
+    padding: 60px 20px;
+    background-color: #f8fafc; /* Fond gris très clair */
+    text-align: center;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-title {
+    font-size: 2.2rem;
+    color: #1a252c;
+    font-weight: 700;
+    margin-bottom: 10px;
+    position: relative;
+    display: inline-block;
+}
+
+/* Petite barre verte sous le titre */
+.section-title::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background-color: #00a651; /* Vert OCP */
+    margin: 8px auto 0 auto;
+    border-radius: 2px;
+}
+
+/* --- ALIGNEMENT PARFAIT EN COHÉRENCE AVEC LES SERVICES --- */
+.stats-grid {
+    display: flex;
+    justify-content: center; /* Aligne les cartes au centre de la ligne */
+    flex-wrap: wrap;         /* S'adapte dynamiquement comme la section services */
+    gap: 20px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 40px auto 0 auto;
+    padding: 0 10px;
+}
+
+/* --- DESIGN ADAPTATIF DE CHAQUE CARTE --- */
+.stat-card {
+    background: #ffffff;
+    border-radius: 16px; /* Coins arrondis comme sur l'image */
+    padding: 25px 20px;
+    
+    /* Calcul dynamique pour aligner 4 cartes proprement sur une ligne */
+    flex: 1 1 calc(25% - 20px); 
+    min-width: 230px; /* Sécurité pour les écrans moyens */
+    max-width: 280px; /* Évite que les cartes ne deviennent trop larges */
+    
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border-top: 4px solid #00a651; /* Ligne supérieure verte */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Effet au survol */
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 166, 81, 0.1);
+}
+
+/* --- TEXTES --- */
+.stat-number {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #00a651; /* Vert OCP */
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1a252c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.stat-desc {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 400;
+}
+/* ===== SERVICES ===== */
+/* --- LE CONTENEUR PRINCIPAL DE LA SECTION --- */
+.services-section {
+    padding: 60px 20px;
+    background-color: #f8fafc; /* Fond très clair pour faire ressortir les cartes */
+    display: flex;
+    flex-direction: column;
+    align-items: center;    /* Centre horizontalement tout le contenu (titre + grid) */
+    justify-content: center;
+    text-align: center;     /* Centre le texte à l'intérieur */
+    width: 100%;
+}
+
+/* --- LE TITRE CENTRÉ AVEC LA LIGNE VERTE (Style OCP) --- */
+.services-section .section-title {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 2.2rem;
+    color: #1a252c;
+    font-weight: 700;
+    margin-bottom: 10px;
+    position: relative;
+    display: inline-block;
+}
+
+/* La petite barre verte centrée sous le titre "Nos Services d'Intervention" */
+.services-section .section-title::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background-color: #00a651; /* Le vert officiel OCP */
+    margin: 8px auto 0 auto;    /* Le "auto" force le centrage absolu de la ligne */
+    border-radius: 2px;
+}
+
+/* --- LA GRID DES CARTES ALIGNÉE AU MILIEU --- */
+.services-grid {
+    display: flex;
+    justify-content: center; /* Aligne les cartes au centre de la ligne */
+    flex-wrap: wrap;         /* Si l'écran est petit, les cartes passent en dessous proprement */
+    gap: 25px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 40px auto 0 auto;
+    padding: 0 10px;
+}
+
+/* --- STYLING DES CARTES DE SERVICES --- */
+.service-card {
+    background: #ffffff;
+    border-radius: 16px;     /* Coins arrondis comme les boîtes de ton app */
+    padding: 30px 20px;
+    min-width: 260px;
+    max-width: 320px;
+    flex: 1;                 /* Partage équitable de l'espace */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); /* Ombre légère très clean */
+    border-top: 4px solid #00a651; /* Griffe verte en haut */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;     /* Centre le contenu de la carte */
+}
+
+/* Effet interactif au survol */
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 166, 81, 0.1);
+}
+
+.service-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.service-card h3 {
+    font-size: 1.2rem;
+    color: #1a252c;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.service-card p {
+    font-size: 0.9rem;
+    color: #718096;
+    line-height: 1.5;
+}
+/* ===== BOUTON CHAT ===== */
+.chat-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00a651, #008f44);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(0, 166, 81, 0.35);
+    z-index: 200;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.chat-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 10px 25px rgba(0, 166, 81, 0.45);
+}
+
+.chat-btn svg {
+    width: 26px;
+    height: 26px;
+}
+
+/* ===== FOOTER PROFESSIONNEL OCP ===== */
+/* ===== FOOTER PROFESSIONNEL – THÈME OCP ===== */
+.footer {
+    background: #0a1a14;
+    color: #e0e7e3;
+    margin-top: 4rem;
+    position: relative;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* Liseré vert supérieur */
+.footer-wave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #00a651, #2ecc71, #00a651);
+    opacity: 0.9;
+}
+
+/* Grille principale */
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 2rem 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2.5rem;
+}
+
+/* Bloc logo (optionnel) – si vous ne voulez pas de logo, supprimez cette section */
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.footer-logo-icon {
+    background: rgba(0, 166, 81, 0.12);
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.footer-logo-icon svg {
+    width: 26px;
+    height: 26px;
+    stroke: #00a651;
+}
+
+.footer-logo span {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+/* Description */
+.footer-description {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #bdd4cd;
+    margin-bottom: 1.5rem;
+}
+
+/* Réseaux sociaux */
+.footer-social {
+    display: flex;
+    gap: 14px;
+}
+
+.social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+    font-size: 1.2rem;
+    transition: all 0.25s ease;
+    text-decoration: none;
+    color: #c0dfd4;
+}
+
+.social-icon:hover {
+    background: #00a651;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 166, 81, 0.25);
+}
+
+/* Titres des colonnes */
+.footer-col h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f0faf5;
+    margin-bottom: 1.2rem;
+    letter-spacing: 0.5px;
+    position: relative;
+    display: inline-block;
+}
+
+.footer-col h4::after {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 2px;
+    background: #00a651;
+    margin-top: 8px;
+    border-radius: 2px;
+    transition: width 0.2s;
+}
+
+.footer-col h4:hover::after {
+    width: 48px;
+}
+
+/* Listes */
+.footer-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-col li {
+    margin-bottom: 0.7rem;
+}
+
+.footer-col a {
+    color: #bdd4cd;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.footer-col a:hover {
+    color: #00a651;
+    transform: translateX(4px);
+}
+
+/* Coordonnées */
+.footer-contact-list li {
+    color: #bdd4cd;
+    font-size: 0.85rem;
+    margin-bottom: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.footer-contact-list a {
+    color: #bdd4cd;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-contact-list a:hover {
+    color: #00a651;
+    transform: none;
+}
+
+/* Bas de page */
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.2rem 2rem;
+    font-size: 0.75rem;
+    background: #05140e;
+}
+
+.footer-bottom-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.footer-bottom p {
+    color: #8fa89e;
+    margin: 0;
+}
+
+.footer-legal {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.footer-legal a {
+    color: #8fa89e;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-legal a:hover {
+    color: #00a651;
+    text-decoration: underline;
+}
+
+.separator {
+    color: #2c5a48;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+    }
+
+    .footer-logo {
+        justify-content: center;
+    }
+
+    .footer-social {
+        justify-content: center;
+    }
+
+    .footer-col h4::after {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .footer-contact-list li {
+        justify-content: center;
+    }
+
+    .footer-bottom-inner {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-legal {
+        justify-content: center;
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .nav-inner {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 12px 24px;
+        gap: 12px;
+    }
+
+    .nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin: 8px 0 0;
+    }
+
+    .logo {
+        order: 1;
+    }
+
+    .connect-btn {
+        order: 2;
+        margin-left: auto;
+    }
+
+    .timeline-row {
+        flex-direction: column !important;
+        gap: 16px;
+    }
+
+    .timeline-half {
+        justify-content: center !important;
+    }
+
+    .dot-wrap {
+        display: none;
+    }
+
+    .timeline-line {
+        display: none;
+    }
+
+    .navbar-logo-img {
+        height: 32px;
+    }
+
+    .chat-btn {
+        width: 48px;
+        height: 48px;
+        bottom: 20px;
+        right: 20px;
+    }
+}

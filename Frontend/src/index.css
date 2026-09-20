@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ocp-green: #008751;
+  --color-ocp-green-dark: #006633;
+  --color-ocp-green-hover: #1e5e3a;
+  --color-ocp-green-light: #e8f5ed;
+  --color-ocp-dark: #1e293b;
+  --color-ocp-gray: #64748b;
+  --color-ocp-bg: #f8fafc;
+  --color-ocp-accent: #00a859;
+}
+
+:root {
+  --ocp-green: #008751;
+  --ocp-green-dark: #006633;
+  --ocp-green-hover: #1e5e3a;
+  --ocp-green-light: #e8f5ed;
+  --ocp-dark: #1e293b;
+  --ocp-gray: #64748b;
+  --ocp-bg: #f8fafc;
+  --ocp-accent: #00a859;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--ocp-bg);
+  color: #334155;
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Animations base */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
