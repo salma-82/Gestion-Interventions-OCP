@@ -1,47 +1,64 @@
 # Gestion des Interventions OCP
 
-Application web de gestion des interventions techniques développée dans le cadre d'un projet de fin d'études au sein du Groupe OCP.
+Application web Full Stack dédiée à la gestion et au suivi des interventions techniques au sein du Groupe OCP.
 
-## 📌 Description
+La plateforme permet de gérer les tickets, les interventions, les équipements et les utilisateurs, avec des interfaces adaptées aux différents rôles : administrateur, technicien et demandeur.
 
-Cette application permet de gérer et suivre les interventions techniques, les tickets, les équipements et les utilisateurs.
+---
 
-Elle propose plusieurs interfaces selon le rôle de l'utilisateur :
+## 🛠 Technologies Used
 
-- Administrateur
-- Technicien
-- Demandeur
+### Backend
 
-## 🚀 Fonctionnalités
+- Java
+- Spring Boot
+- Spring Security
+- JWT
+- Spring Data JPA
+- Maven
 
-- Authentification et autorisation
-- Gestion des utilisateurs
-- Gestion des tickets
-- Gestion des interventions
-- Gestion des équipements
-- Suivi des interventions
-- Notifications
-- Évaluation des interventions
-- Tableaux de bord
-- Gestion des rôles et permissions
-- Sécurisation des API avec JWT
+### Frontend
 
-## 🏗️ Architecture
+- React.js
+- JavaScript
+- HTML5
+- CSS3
+- Vite
 
-Le projet est organisé en deux parties :
+### Database
+
+- MySQL / Oracle
+
+### Tools
+
+- Git
+- GitHub
+- Postman
+- UML
+
+---
+
+## ⚙️ Project Structure
 
 ```text
 Gestion-Interventions-OCP/
 │
-├── backend/
-│   └── intervention/
-│       ├── src/
+├── /backend
+│   └── /intervention
+│       ├── /src
+│       │   ├── /main
+│       │   │   ├── /java
+│       │   │   └── /resources
+│       │   └── /test
+│       ├── / .mvn
 │       ├── pom.xml
-│       └── mvnw
+│       ├── mvnw
+│       └── mvnw.cmd
 │
-├── Frontend/
-│   ├── src/
-│   ├── public/
-│   └── package.json
+├── /Frontend
+│   ├── /src
+│   ├── /public
+│   ├── package.json
+│   └── vite.config.js
 │
 └── README.md
